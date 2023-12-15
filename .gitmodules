@@ -1,0 +1,6 @@
+[submodule "hal/cmsis_core"]
+	path = hal/cmsis_core
+	url = https://github.com/ARM-software/CMSIS_5
+[submodule "hal/cmsis_stm32l4"]
+	path = hal/cmsis_stm32l4
+	url = https://github.com/STMicroelectronics/cmsis_device_l4
