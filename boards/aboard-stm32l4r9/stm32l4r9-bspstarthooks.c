@@ -32,7 +32,6 @@
 #include <rtems/score/armv7m.h>
 
 #include "stm32l4r9xx.h"
-#include <string.h>
 
 void bsp_start_hook_0(void) {
   if ((RCC->AHB3ENR & RCC_AHB3ENR_FMCEN) == 0) {
