@@ -45,7 +45,6 @@ extern "C" {
  * @brief STM32L4 Board Support Package.
  *
  * @{
- */
 
 #define BSP_FEATURE_IRQ_EXTENSION
 
@@ -57,13 +56,17 @@ extern "C" {
 
 uint32_t stm32l4_systick_frequency(void);
 
+ */
 /* default functions */
+
+/*
 // NOTE: in RTEMS what are default functions?
 void stm32l4_init_power(void);
 void stm32l4_init_oscillator(void);
 void stm32l4_init_clocks(void);
 void stm32l4_init_peripheral_clocks(void);
 void stm32l4_init_qspi(void);
+*/
 
 /** @} */
 
