@@ -24,3 +24,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+void bsp_start_hook_0(void) { /* do some initialization steps */
+}
+
+void bsp_start_hook_1(void) { /* do some initialization steps */
+}
