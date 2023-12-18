@@ -3,6 +3,7 @@
 #include <bsp/irq-generic.h>
 #include <bsp/linker-symbols.h>
 
+extern uint32_t SystemCoreClock;
 uint32_t stm32l4_systick_frequency(void) { return SystemCoreClock; }
 
 void bsp_start(void) {
