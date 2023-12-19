@@ -106,6 +106,25 @@ typedef struct {
  */
 
 #define STM32L4_UART_DEFAULT_BAUD 115200
+/* TODO: move prototypes */
+void stm32l4_uart_initialize(rtems_termios_device_context *base);
+
+static bool stm32l4_uart_first_open(rtems_termios_tty *tty,
+                                    rtems_termios_device_context *base,
+                                    struct termios *term,
+                                    rtems_libio_open_close_args_t *args);
+
+static void zynq_uart_last_close(rtems_termios_tty *tty,
+                                 rtems_termios_device_context *base,
+                                 rtems_libio_open_close_args_t *args);
+
+int stm32l4_uart_read_polled(rtems_termios_device_context *base);
+
+void stm32l4_uart_write_polled(rtems_termios_device_context *base, char c);
+
+static bool stm32l4_uart_set_attributes(rtems_termios_device_context *context,
+                                        const struct termios *term);
+
 /* ===== IMPLEMENTATION OF METHODS ========================================== */
 /* ----- sub-block I -------------------------------------------------------- */
 void stm32l4_uart_initialize(rtems_termios_device_context *base) {
@@ -123,6 +142,12 @@ static bool stm32l4_uart_first_open(rtems_termios_tty *tty,
   return true;
 }
 /* ----- sub-block II ------------------------------------------------------- */
+static void zynq_uart_last_close(rtems_termios_tty *tty,
+                                 rtems_termios_device_context *base,
+                                 rtems_libio_open_close_args_t *args) {
+  /* TODO: link */
+  /* TODO: evaluate if you actually need it - see zynq implementation */
+}
 
 /* ----- sub-block III ------------------------------------------------------ */
 int stm32l4_uart_read_polled(rtems_termios_device_context *base) {
@@ -153,11 +178,11 @@ rtems_termios_device_context stm32l4_uart_instances[3] = {
  */
 const rtems_termios_device_handler stm32l4_uart_handler_polled = {
     .first_open = stm32l4_uart_first_open,
-    .last_close = my_driver_last_close, // maybe can be null?
+    .last_close = stm32l4_uart_last_close, // maybe can be null?
     .poll_read = stm32l4_uart_read_polled,
     .write = stm32l4_uart_write_polled,
     .set_attributes = stm32l4_uart_set_attributes,
-    .ioctl = my_driver_ioctl, /* optional, may be NULL */
+    .ioctl = NULL,
     .mode = TERMIOS_POLLED};
 
 /* ===== IMPLEMENTATION =====================================================
@@ -178,9 +203,12 @@ rtems_status_code console_initialize(rtems_device_major_number major,
     rtems_termios_device_install(&uart[0], &stm32l4_uart_handler_polled, NULL,
                                  &stm32l4_uart_instances[i]);
 
+    /*
+     * TODO: See if it can be removed, not sure what it does
     if (i == BSP_CONSOLE_MINOR) {
       link(&uart[0], CONSOLE_DEVICE_NAME);
     }
+    */
   }
 
   return RTEMS_SUCCESSFUL;
