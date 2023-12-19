@@ -174,8 +174,7 @@ rtems_termios_device_context stm32l4_uart_instances[3] = {
     RTEMS_TERMIOS_DEVICE_CONTEXT_INITIALIZER("stm32l4 UART 3"),
 };
 
-/* ----- construct the device handler structure -----------------------------
- */
+/* ----- construct the device handler structure ----------------------------- */
 const rtems_termios_device_handler stm32l4_uart_handler_polled = {
     .first_open = stm32l4_uart_first_open,
     .last_close = stm32l4_uart_last_close, // maybe can be null?
@@ -185,10 +184,8 @@ const rtems_termios_device_handler stm32l4_uart_handler_polled = {
     .ioctl = NULL,
     .mode = TERMIOS_POLLED};
 
-/* ===== IMPLEMENTATION =====================================================
- */
-/* ----- install the termios devices ----------------------------------------
- */
+/* ===== IMPLEMENTATION ===================================================== */
+/* ----- install the termios devices ---------------------------------------- */
 rtems_status_code console_initialize(rtems_device_major_number major,
                                      rtems_device_minor_number minor,
                                      void *arg) {
@@ -213,3 +210,43 @@ rtems_status_code console_initialize(rtems_device_major_number major,
 
   return RTEMS_SUCCESSFUL;
 }
+
+/* ----- initialize bsp debug console interface ----------------------------- */
+
+static void stm32l4_debug_console_early_init(char c);
+
+static void stm32l4_debug_console_early_init(char c) {
+  uart_init(UART2, STM32L4_UART_DEFAULT_BAUD);
+  uart_write_byte(UART2, c);
+}
+
+/**
+ * @ingroup RTEMSAPIKernelCharIO
+ *
+ * @brief This function pointer references the kernel character output
+ *   implementation.
+ *
+ * This function pointer shall never be NULL.  It shall be provided by the
+ * BSP and statically initialized.  The referenced function shall output
+ * exactly the character specified by the parameter.  In particular, it
+ * shall not perform character translations, for example ``NL`` to ``CR``
+ * followed by
+ * ``NR``.  The function shall not block.
+ */
+BSP_output_char_function_type BSP_output_char =
+    stm32l4_debug_console_early_init;
+
+/**
+ * @ingroup RTEMSAPIKernelCharIO
+ *
+ * @brief This function pointer may reference the kernel character input
+ *   implementation.
+ *
+ * This function pointer may be NULL.  It may reference a function provided by
+ * the BSP.  Referenced functions shall dequeue the least recently received
+ * character from the device and return it as an unsigned character.  If no
+ * character is enqueued on the device, then the function shall immediately
+ * return the value minus one.
+ */
+BSP_polling_getchar_function_type BSP_poll_char =
+    NULL; // TODO: add proper pointer
