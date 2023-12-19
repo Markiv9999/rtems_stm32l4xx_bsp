@@ -1,3 +1,5 @@
 Board support package for the stm32l4xx family of microcontrollers
-Addiiton commit fro beginning of work on console driver
+
+Addition commit for beginning of work on console driver
+Addition commit for first successful bsp compilation!
 
