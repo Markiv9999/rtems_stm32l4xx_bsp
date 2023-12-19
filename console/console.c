@@ -114,9 +114,9 @@ static bool stm32l4_uart_first_open(rtems_termios_tty *tty,
                                     struct termios *term,
                                     rtems_libio_open_close_args_t *args);
 
-static void zynq_uart_last_close(rtems_termios_tty *tty,
-                                 rtems_termios_device_context *base,
-                                 rtems_libio_open_close_args_t *args);
+static void stm32l4_uart_last_close(rtems_termios_tty *tty,
+                                    rtems_termios_device_context *base,
+                                    rtems_libio_open_close_args_t *args);
 
 int stm32l4_uart_read_polled(rtems_termios_device_context *base);
 
@@ -142,9 +142,9 @@ static bool stm32l4_uart_first_open(rtems_termios_tty *tty,
   return true;
 }
 /* ----- sub-block II ------------------------------------------------------- */
-static void zynq_uart_last_close(rtems_termios_tty *tty,
-                                 rtems_termios_device_context *base,
-                                 rtems_libio_open_close_args_t *args) {
+static void stm32l4_uart_last_close(rtems_termios_tty *tty,
+                                    rtems_termios_device_context *base,
+                                    rtems_libio_open_close_args_t *args) {
   /* TODO: link */
   /* TODO: evaluate if you actually need it - see zynq implementation */
 }
