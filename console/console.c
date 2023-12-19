@@ -11,6 +11,8 @@
 #include <bsp.h>
 #include <console.h>
 
+#include "hal_uart.h"
+
 /* NOTE: it also includes what seems to be a dvice specification header:
  * #include <dev/serial/zynq-uart.h>
  * the file is located in:
@@ -79,15 +81,6 @@
  * this is a function pointer, probably pointing to a default lock release
  * function. It would be used to release the lock on the termios device context.
  */
-
-/* HACK: place in the configuration file */
-typedef struct {
-  rtems_termios_device_context base;
-  volatile struct zynq_uart *regs;
-  int tx_queued;
-  bool transmitting;
-  rtems_vector_number irq;
-} zynq_uart_context;
 
 // NOTE: to be honest i feel like since i will use the CMSIS headers i will not
 // need to use a superset of the rtems termios device context. i can try to work
