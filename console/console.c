@@ -10,6 +10,7 @@
 
 #include <bsp.h>
 #include <console.h>
+#include <rtems/bspIo.h> //for printk?
 
 #include "hal_uart.h"
 
