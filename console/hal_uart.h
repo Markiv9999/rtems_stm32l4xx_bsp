@@ -11,7 +11,7 @@
 #include "stm32l4r9xx.h"
 
 // WARNING: Substitute with bsp system headers
-#define FREQ 120000000 // CPU frequency
+#define FREQ 4000000 // CPU frequency
 #define BIT(x) (1UL << (x))
 #define PIN(bank, num) ((((bank) - 'A') << 8) | (num))
 #define PINNO(pin) (pin & 255)
