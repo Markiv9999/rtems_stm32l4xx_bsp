@@ -71,7 +71,7 @@ static inline void uart_init(USART_TypeDef *uart, unsigned long baud) {
   // Tochange
   // if (uart == UART1) tx = PIN('A', 9), rx = PIN('A', 10);
   if (uart == UART2)
-    tx = PIN('A', 2), rx = PIN('A', 3);
+    tx = PIN('D', 5), rx = PIN('D', 6);
   // if (uart == UART3) tx = PIN('D', 8), rx = PIN('D', 9);
 
   // Tochek
