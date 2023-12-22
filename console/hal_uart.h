@@ -57,8 +57,8 @@ static inline void uart_init(USART_TypeDef *uart, unsigned long baud) {
   uint8_t af = 7;          // Alternate function
   uint16_t rx = 0, tx = 0; // pins
 
-  // enable clock for GPIOA YES! ottimo lavoro, serviva
-  RCC->AHB2ENR |= BIT(0);
+  // enable clock for GPIOD YES! ottimo lavoro, serviva
+  RCC->AHB2ENR |= BIT(3);
 
   // Tochange
   if (uart == UART1)
