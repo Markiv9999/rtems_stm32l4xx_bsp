@@ -211,7 +211,10 @@ static void stm32l4_debug_console_early_init(char c);
 
 static void stm32l4_debug_console_early_init(char c) {
   uart_init(UART2, STM32L4_UART_DEFAULT_BAUD);
-  uart_write_byte(UART2, c);
+  /* TODO: Put back */
+  //uart_write_byte(UART2, c);
+  /* TEST: just for testing */
+  uart_write_buf(UART2, "play victory dance\n\r", 20);
 }
 
 /**
