@@ -31,9 +31,8 @@ void BSP_START_TEXT_SECTION bsp_start_hook_0(void) {}
 
 void BSP_START_TEXT_SECTION bsp_start_hook_1(void) {
   bsp_start_copy_sections();
-
-  for (char *addr = bsp_section_bss_begin; addr <= bsp_section_bss_end;
-       addr++) {
+  volatile char *addr = bsp_section_bss_begin;
+  for (; addr <= bsp_section_bss_end; addr++) {
     *addr &= 0U;
   }
 }
