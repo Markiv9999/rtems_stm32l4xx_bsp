@@ -33,6 +33,5 @@ void BSP_START_TEXT_SECTION bsp_start_hook_1(void) {
   volatile int funny1 = 1;
   bsp_start_copy_sections();
   volatile int funny2 = 2;
-  // HACK: bsp_start_clear_bss temporarly disabled
-  // bsp_start_clear_bss(); TODO: put back (eventually)
+  bsp_start_clear_bss();
 }
