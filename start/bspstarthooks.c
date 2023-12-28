@@ -29,6 +29,8 @@
 #include <bsp/start.h>
 #include <stdint.h>
 
+#define PREFER_SIZE_OVER_SPEED
+
 void BSP_START_TEXT_SECTION bsp_start_hook_0(void) {}
 
 void BSP_START_TEXT_SECTION bsp_start_hook_1(void) {
