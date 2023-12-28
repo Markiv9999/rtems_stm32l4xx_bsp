@@ -29,15 +29,11 @@
 #include <bsp/start.h>
 #include <stdint.h>
 
-#define PREFER_SIZE_OVER_SPEED
-
 void BSP_START_TEXT_SECTION bsp_start_hook_0(void) {}
 
 void BSP_START_TEXT_SECTION bsp_start_hook_1(void) {
   bsp_start_copy_sections();
-  void *cool_ptr =
-      (char *)bsp_section_bss_begin + (uint32_t)bsp_section_bss_size;
-  memset(cool_ptr, '\0', sizeof(char));
+
   memset(bsp_section_bss_begin, 0, (uint32_t)bsp_section_bss_size);
 
   volatile char *addr = bsp_section_bss_begin;
