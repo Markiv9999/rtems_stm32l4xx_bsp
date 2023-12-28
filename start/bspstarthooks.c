@@ -36,7 +36,7 @@ void BSP_START_TEXT_SECTION bsp_start_hook_1(void) {
   volatile uint32_t pingas = 32;
   volatile uint32_t *pingas_addr = &pingas;
 
-  memset(pingas_addr, 16, sizeof(uint32_t));
+  memset(pingas_addr, 0, sizeof(uint32_t));
 
   pingas = pingas + 1;
   pingas_addr = pingas_addr + 1;
