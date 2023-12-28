@@ -26,11 +26,18 @@
  */
 #include <bsp.h>
 #include <bsp/start.h>
+#include <stdint.h>
 
 void BSP_START_TEXT_SECTION bsp_start_hook_0(void) {}
 
 void BSP_START_TEXT_SECTION bsp_start_hook_1(void) {
   bsp_start_copy_sections();
+
+  volatile uint32_t pingas;
+  volatile uint32_t *pingas_addr = &pingas;
+
+  memset(pingas_addr, 16, sizeof(uint32_t));
+
   volatile char *addr = bsp_section_bss_begin;
   for (; addr <= bsp_section_bss_end; addr++) {
     *addr &= 0U;
