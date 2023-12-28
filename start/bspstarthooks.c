@@ -33,7 +33,7 @@ void BSP_START_TEXT_SECTION bsp_start_hook_0(void) {}
 
 void BSP_START_TEXT_SECTION bsp_start_hook_1(void) {
   bsp_start_copy_sections();
-
+  memset(bsp_section_bss_begin + bsp_section_bss_size, '\0', sizeof(char));
   memset(bsp_section_bss_begin, 0, bsp_section_bss_size);
 
   volatile char *addr = bsp_section_bss_begin;
