@@ -1,9 +1,4 @@
 #include "stm32l4r9_module_mspi.h"
-#include "ext_error_codes.h"
-#include "ext_typedefs.h"
-#include "stm32l476xx.h"
-
-#include <stdlib.h>
 
 /**
  * --------------------------------------------------------------------------- *
