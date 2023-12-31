@@ -12,7 +12,7 @@
 
 #include "ext_error_codes.h"
 #include "ext_typedefs.h"
-#include "stm32l476xx.h"
+#include "stm32l4r9xx.h"
 
 /**
  * the module shall not include board/device specific informations,
