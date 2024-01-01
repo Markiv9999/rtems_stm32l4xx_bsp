@@ -12,8 +12,8 @@
 // thereafter fix the incorrect defines via the new definitions that
 // act as a patch
 
-#include "error_codes.h"
-#include "typedefs.h"
+#include "ext_error_codes.h"
+#include "ext_typedefs.h"
 
 #define MT29_PAGE_W_SIZE 512
 #define MT29_PAGE_SIZE (MT29_PAGE_W_SIZE * 4)
