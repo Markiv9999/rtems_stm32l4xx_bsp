@@ -15,6 +15,8 @@ int mspi_init(void) {
    * configuration
    */
 
+  /* Enable cock for the octospi interface controller */
+  mspi_clock_enable();
   /* Enables the clock for the gpios, sets to alternate function and configures
    * the alternate function */
   mspi_gpio_cfg();
@@ -30,6 +32,12 @@ int mspi_init(void) {
    */
   return EXIT_UNDEFINED;
 }
+
+void mspi_clock_enable(void) {
+  RCC->AHB3ENR |= RCC_AHB3ENR_OSPI1EN;
+  RCC->AHB3ENR |= RCC_AHB3ENR_OSPI2EN;
+}
+
 void mspi_gpio_cfg(void) {
   // configure alternate function for CLK and CS
   GPIOB->AFR[1] &= ~GPIO_AFRH_AFSEL10_Msk;

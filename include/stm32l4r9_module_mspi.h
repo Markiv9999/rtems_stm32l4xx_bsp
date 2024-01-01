@@ -74,6 +74,7 @@ struct mspi_interface {
  * --------------------------------------------------------------------------- *
  */
 int mspi_init(void);
+void mspi_clock_enable(void);
 void mspi_gpio_cfg(void);
 void mspi_sys_cfg(void);
 void mspi_dev_cfg(void);
