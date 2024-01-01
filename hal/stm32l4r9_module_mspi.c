@@ -1,4 +1,5 @@
 #include "stm32l4r9_module_mspi.h"
+#include "stm32l4r9xx.h"
 
 /**
  * --------------------------------------------------------------------------- *
@@ -97,34 +98,50 @@ void mspi_gpio_cfg(void) {
 
 void mspi_sys_cfg(void) {
   /* Enable the Quad-SPI interface clock */
-  RCC->AHB3ENR |= RCC_AHB3ENR_QSPIEN;
+  RCC->AHB3ENR |= RCC_AHB3ENR_OSPI1EN;
+  RCC->AHB3ENR |= RCC_AHB3ENR_OSPI2EN;
   /* Reset Quad-SPI peripheral */
-  RCC->AHB3RSTR |= (RCC_AHB3RSTR_QSPIRST);  /* Reset */
-  RCC->AHB3RSTR &= ~(RCC_AHB3RSTR_QSPIRST); /* Release reset */
+  RCC->AHB3RSTR |= (RCC_AHB3RSTR_OSPI1RST);  /* Reset */
+  RCC->AHB3RSTR |= (RCC_AHB3RSTR_OSPI2RST);  /* Reset */
+  RCC->AHB3RSTR &= ~(RCC_AHB3RSTR_OSPI1RST); /* Release reset */
+  RCC->AHB3RSTR &= ~(RCC_AHB3RSTR_OSPI2RST); /* Release reset */
   /* Enable Quad-SPI DMA */
-  QUADSPI->CR |= QUADSPI_CR_DMAEN;
+  OCTOSPI1->CR |= OCTOSPI_CR_DMAEN;
 }
 
 // initialization method
 void mspi_dev_cfg(void) {
-  QUADSPI->DCR |= 27 << QUADSPI_DCR_FSIZE_Pos;
-  QUADSPI->CR |= 16 << QUADSPI_CR_PRESCALER_Pos;
+  /* TODO: Check
+   * check git diff with original
+   */
+  OCTOSPI1->DCR1 |= 27 << OCTOSPI_DCR1_DEVSIZE_Pos;
+  OCTOSPI1->DCR2 |= 16 << OCTOSPI_DCR2_PRESCALER_Pos;
 }
 
 void mspi_interface_cleanup(void) {
   // cleanup of functional registers
-  QUADSPI->CR &= ~(QUADSPI_CR_EN);
-  QUADSPI->CCR &=
-      ~(QUADSPI_CCR_FMODE | QUADSPI_CCR_IMODE | QUADSPI_CCR_ADMODE |
-        QUADSPI_CCR_DMODE | QUADSPI_CCR_ADSIZE | QUADSPI_CCR_INSTRUCTION);
+  OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
+  OCTOSPI1->CCR &=
+      ~(OCTOSPI_CR_FMODE | OCTOSPI_CCR_IMODE | OCTOSPI_CCR_ADMODE |
+        OCTOSPI_CCR_DMODE | OCTOSPI_CCR_ADSIZE | OCTOSPI_IR_INSTRUCTION);
 
-  QUADSPI->DLR &= ~(QUADSPI_DLR_DL);
-  QUADSPI->AR &= ~(QUADSPI_AR_ADDRESS_Msk);
-  QUADSPI->DR &= ~(QUADSPI_DR_DATA_Msk);
+  OCTOSPI1->DLR &= ~(OCTOSPI_DLR_DL);
+  OCTOSPI1->AR &= ~(OCTOSPI_AR_ADDRESS_Msk);
+  OCTOSPI1->DR &= ~(OCTOSPI_DR_DATA_Msk);
+
+  // cleanup of functional registers
+  OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
+  OCTOSPI1->CCR &=
+      ~(OCTOSPI_CR_FMODE | OCTOSPI_CCR_IMODE | OCTOSPI_CCR_ADMODE |
+        OCTOSPI_CCR_DMODE | OCTOSPI_CCR_ADSIZE | OCTOSPI_IR_INSTRUCTION);
+
+  OCTOSPI1->DLR &= ~(OCTOSPI_DLR_DL);
+  OCTOSPI1->AR &= ~(OCTOSPI_AR_ADDRESS_Msk);
+  OCTOSPI1->DR &= ~(OCTOSPI_DR_DATA_Msk);
 }
 
 u16 mspi_interface_wait_busy(void) {
-  while (QUADSPI->SR & QUADSPI_SR_BUSY) {
+  while (OCTOSPI1->SR & OCTOSPI_SR_BUSY) {
   };
   // PENDING add timeout
   return EXIT_SUCCESS;
@@ -140,22 +157,22 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
   // PENDING save interface registers for check
   mspi_interface_cleanup();
   // set functional mode
-  QUADSPI->CCR |= ((cmd.fun_mode << QUADSPI_CCR_FMODE_Pos));
+  OCTOSPI1->CCR |= ((cmd.fun_mode << OCTOSPI_CR_FMODE_Pos));
   // set *-MODES (number of transfer lines)
-  QUADSPI->CCR |= ((cmd.instr_mode << QUADSPI_CCR_IMODE_Pos) |
-                   (cmd.addr_mode << QUADSPI_CCR_ADMODE_Pos) |
-                   (cmd.data_mode << QUADSPI_CCR_DMODE_Pos));
+  OCTOSPI1->CCR |= ((cmd.instr_mode << OCTOSPI_CCR_IMODE_Pos) |
+                    (cmd.addr_mode << OCTOSPI_CCR_ADMODE_Pos) |
+                    (cmd.data_mode << OCTOSPI_CCR_DMODE_Pos));
   // set length of *-PHASES (if in use)
   if (cmd.addr_mode > 0) {
-    QUADSPI->CCR |= (cmd.addr_size << QUADSPI_CCR_ADSIZE_Pos);
+    OCTOSPI1->CCR |= (cmd.addr_size << OCTOSPI_CCR_ADSIZE_Pos);
   }
   if (cmd.data_mode > 0) {
-    QUADSPI->DLR |= (cmd.data_size << QUADSPI_DLR_DL_Pos);
+    OCTOSPI1->DLR |= (cmd.data_size << OCTOSPI_DLR_DL_Pos);
   }
   // enable the peripheral
-  QUADSPI->CR |= (QUADSPI_CR_EN);
+  OCTOSPI1->CR |= (OCTOSPI_CR_EN);
   // set intruction, address (if in use)
-  QUADSPI->CCR |= (cmd.instr_cmd << QUADSPI_CCR_INSTRUCTION_Pos);
+  OCTOSPI1->CCR |= (cmd.instr_cmd << OCTOSPI_IR_INSTRUCTION_Pos);
   // if read functional mode enable the dma pull channel before sending the
   // address
   if (cmd.data_mode > 0) {
@@ -165,9 +182,9 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
   }
   // Set the address if needed by the command
   if (cmd.addr_mode > 0) {
-    QUADSPI->AR |=
+    OCTOSPI1->AR |=
         (cmd.addr_cmd
-         << QUADSPI_AR_ADDRESS_Pos); // for now even plane, beginning of page
+         << OCTOSPI_AR_ADDRESS_Pos); // for now even plane, beginning of page
   }
 
   // if read functional mode enable the dma pull channel before sending the
@@ -180,11 +197,11 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
 
   // wait for the transaction to complete (+ timeout and abort)
   if (mspi_interface_wait_busy()) {
-    QUADSPI->CR &= ~(QUADSPI_CR_EN); // disable the interface in anay case
+    OCTOSPI1->CR &= ~(OCTOSPI_CR_EN); // disable the interface in anay case
     return ERROR_MSPI_INTERFACE_STUCK;
   }
 
-  QUADSPI->CR &= ~(QUADSPI_CR_EN);
+  OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
 
   return EXIT_SUCCESS;
 }
@@ -197,31 +214,31 @@ u16 mspi_autopoll_wait(struct mspi_cmd (*device_fun_handler)(void *),
   cmd = device_fun_handler(argument);
 
   // Set the 'mask', 'match', and 'polling interval' values.
-  QUADSPI->PSMKR = mask;
-  QUADSPI->PSMAR = match;
-  QUADSPI->PIR = 0x10;
+  OCTOSPI1->PSMKR = mask;
+  OCTOSPI1->PSMAR = match;
+  OCTOSPI1->PIR = 0x10;
 
   // PENDING save interface registers for check
   mspi_interface_cleanup();
 
   // set functional mode
-  QUADSPI->CCR |= ((cmd.fun_mode << QUADSPI_CCR_FMODE_Pos));
+  OCTOSPI1->CCR |= ((cmd.fun_mode << OCTOSPI_CR_FMODE_Pos));
   // set *-MODES (number of transfer lines)
-  QUADSPI->CCR |= ((cmd.instr_mode << QUADSPI_CCR_IMODE_Pos) |
-                   (cmd.addr_mode << QUADSPI_CCR_ADMODE_Pos) |
-                   (cmd.data_mode << QUADSPI_CCR_DMODE_Pos));
+  OCTOSPI1->CCR |= ((cmd.instr_mode << OCTOSPI_CCR_IMODE_Pos) |
+                    (cmd.addr_mode << OCTOSPI_CCR_ADMODE_Pos) |
+                    (cmd.data_mode << OCTOSPI_CCR_DMODE_Pos));
 
   // set length of *-PHASES (if in use)
   if (cmd.addr_mode > 0) {
-    QUADSPI->CCR |= (cmd.addr_size << QUADSPI_CCR_ADSIZE_Pos);
+    OCTOSPI1->CCR |= (cmd.addr_size << OCTOSPI_CCR_ADSIZE_Pos);
   }
   if (cmd.data_mode > 0) {
-    QUADSPI->DLR |= (cmd.data_size << QUADSPI_DLR_DL_Pos);
+    OCTOSPI1->DLR |= (cmd.data_size << OCTOSPI_DLR_DL_Pos);
   }
   // enable the peripheral
-  QUADSPI->CR |= (QUADSPI_CR_EN);
+  OCTOSPI1->CR |= (OCTOSPI_CR_EN);
   // set intruction, address (if in use)
-  QUADSPI->CCR |= (cmd.instr_cmd << QUADSPI_CCR_INSTRUCTION_Pos);
+  OCTOSPI1->CCR |= (cmd.instr_cmd << OCTOSPI_IR_INSTRUCTION_Pos);
   // if read functional mode enable the dma pull channel before sending the
   // address
   if (cmd.data_mode > 0) {
@@ -231,9 +248,9 @@ u16 mspi_autopoll_wait(struct mspi_cmd (*device_fun_handler)(void *),
   }
   // Set the address if needed by the command
   if (cmd.addr_mode > 0) {
-    QUADSPI->AR |=
+    OCTOSPI1->AR |=
         (cmd.addr_cmd
-         << QUADSPI_AR_ADDRESS_Pos); // for now even plane, beginning of page
+         << OCTOSPI_AR_ADDRESS_Pos); // for now even plane, beginning of page
   }
 
   // if read functional mode enable the dma pull channel before sending the
@@ -246,18 +263,18 @@ u16 mspi_autopoll_wait(struct mspi_cmd (*device_fun_handler)(void *),
 
   // wait for the transaction to complete (+ timeout and abort)
   if (mspi_interface_wait_busy()) {
-    QUADSPI->CR &= ~(QUADSPI_CR_EN); // disable the interface in anay case
+    OCTOSPI1->CR &= ~(OCTOSPI_CR_EN); // disable the interface in anay case
     return ERROR_MSPI_INTERFACE_STUCK;
   }
 
   // Wait for a match.
-  while (QUADSPI->SR & QUADSPI_SR_BUSY) {
+  while (OCTOSPI1->SR & OCTOSPI_SR_BUSY) {
   };
   // Acknowledge the 'status match flag.'
-  QUADSPI->FCR |= (QUADSPI_FCR_CSMF);
+  OCTOSPI1->FCR |= (OCTOSPI_FCR_CSMF);
   // Un-set the data mode and disable auto-polling.
-  QUADSPI->CCR &= ~(QUADSPI_CCR_FMODE | QUADSPI_CCR_DMODE);
+  OCTOSPI1->CCR &= ~(OCTOSPI_CR_FMODE | OCTOSPI_CCR_DMODE);
   // Disable the peripheral.
-  QUADSPI->CR &= ~(QUADSPI_CR_EN);
+  OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
   return EXIT_SUCCESS;
 }
