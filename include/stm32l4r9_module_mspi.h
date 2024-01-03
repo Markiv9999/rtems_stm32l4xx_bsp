@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "ext_error_codes.h"
 #include "ext_typedefs.h"
