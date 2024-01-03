@@ -152,7 +152,9 @@ u16 mspi_interface_wait_busy(void) {
 u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
                       struct mspi_interface interface, void *argument) {
 
-  struct mspi_cmd cmd = {0};
+  struct mspi_cmd cmd;
+  memset(cmd, 0, sizeof(struct mspi_cmd));
+
   cmd = device_fun_handler(argument);
 
   // PENDING save interface registers for check
@@ -211,7 +213,9 @@ u16 mspi_autopoll_wait(struct mspi_cmd (*device_fun_handler)(void *),
                        struct mspi_interface interface, void *argument,
                        u32 mask, u32 match) {
 
-  struct mspi_cmd cmd = {0};
+  struct mspi_cmd cmd;
+  memset(cmd, 0, sizeof(struct mspi_cmd));
+
   cmd = device_fun_handler(argument);
 
   // Set the 'mask', 'match', and 'polling interval' values.

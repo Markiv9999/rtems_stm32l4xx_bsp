@@ -29,7 +29,7 @@ struct mspi_cmd mspi_device_wait_write_enable(void *);
  */
 
 u32 RA_gen(struct nand_addr nand_addr) {
-  u32 RA = {0};
+  u32 RA = 0UL;
   RA |= (nand_addr.block << 17);
   RA |= (nand_addr.page << 11);
   RA >>= 8;
@@ -37,7 +37,7 @@ u32 RA_gen(struct nand_addr nand_addr) {
 }
 
 u32 CA_gen(struct nand_addr nand_addr) {
-  u32 CA = {0};
+  u32 CA = 0UL;
   CA |= ((nand_addr.block & 0x01) << 12);
   CA |= (nand_addr.column);
   return CA;
@@ -73,7 +73,9 @@ enum addr_size {
 };
 
 struct mspi_cmd mspi_device_write_unlock(void *placeholder) {
-  struct mspi_cmd cmd = {0};
+  struct mspi_cmd cmd;
+  memset(cmd, 0, sizeof(struct mspi_cmd));
+
   cmd.is_double_mem = IS_DUAL_MEM;
   cmd.fun_mode = WRITE;
 
@@ -92,7 +94,9 @@ struct mspi_cmd mspi_device_write_unlock(void *placeholder) {
 }
 
 struct mspi_cmd mspi_device_write_lock(void *placeholder) {
-  struct mspi_cmd cmd = {0};
+  struct mspi_cmd cmd;
+  memset(cmd, 0, sizeof(struct mspi_cmd));
+
   cmd.is_double_mem = IS_DUAL_MEM;
   cmd.fun_mode = WRITE;
 
@@ -111,7 +115,9 @@ struct mspi_cmd mspi_device_write_lock(void *placeholder) {
 }
 
 struct mspi_cmd mspi_device_write_enable(void *placeholder) {
-  struct mspi_cmd cmd = {0};
+  struct mspi_cmd cmd;
+  memset(cmd, 0, sizeof(struct mspi_cmd));
+
   cmd.is_double_mem = IS_DUAL_MEM;
   cmd.fun_mode = WRITE;
 
@@ -122,7 +128,9 @@ struct mspi_cmd mspi_device_write_enable(void *placeholder) {
 }
 
 struct mspi_cmd mspi_device_get_status(void *placeholder) {
-  struct mspi_cmd cmd = {0};
+  struct mspi_cmd cmd;
+  memset(cmd, 0, sizeof(struct mspi_cmd));
+
   cmd.is_double_mem = IS_DUAL_MEM;
   cmd.fun_mode = READ;
 
@@ -140,7 +148,9 @@ struct mspi_cmd mspi_device_get_status(void *placeholder) {
 }
 
 struct mspi_cmd mspi_device_page_read_from_nand(void *nand_addr) {
-  struct mspi_cmd cmd = {0};
+  struct mspi_cmd cmd;
+  memset(cmd, 0, sizeof(struct mspi_cmd));
+
   cmd.is_double_mem = IS_DUAL_MEM;
   cmd.fun_mode = WRITE;
 
@@ -158,7 +168,9 @@ struct mspi_cmd mspi_device_page_read_from_nand(void *nand_addr) {
 }
 
 struct mspi_cmd mspi_device_page_read_from_cache_SINGLE(void *nand_addr) {
-  struct mspi_cmd cmd = {0};
+  struct mspi_cmd cmd;
+  memset(cmd, 0, sizeof(struct mspi_cmd));
+
   cmd.is_double_mem = IS_DUAL_MEM;
   cmd.fun_mode = READ;
 
@@ -176,7 +188,9 @@ struct mspi_cmd mspi_device_page_read_from_cache_SINGLE(void *nand_addr) {
 }
 
 struct mspi_cmd mspi_device_page_read_from_cache_QUAD(void *nand_addr) {
-  struct mspi_cmd cmd = {0};
+  struct mspi_cmd cmd;
+  memset(cmd, 0, sizeof(struct mspi_cmd));
+
   cmd.is_double_mem = IS_DUAL_MEM;
   cmd.fun_mode = READ;
 
@@ -194,7 +208,9 @@ struct mspi_cmd mspi_device_page_read_from_cache_QUAD(void *nand_addr) {
 }
 
 struct mspi_cmd mspi_device_page_load_SINGLE(void *nand_addr) {
-  struct mspi_cmd cmd = {0};
+  struct mspi_cmd cmd;
+  memset(cmd, 0, sizeof(struct mspi_cmd));
+
   cmd.is_double_mem = IS_DUAL_MEM;
   cmd.fun_mode = WRITE;
 
@@ -212,7 +228,9 @@ struct mspi_cmd mspi_device_page_load_SINGLE(void *nand_addr) {
 }
 
 struct mspi_cmd mspi_device_page_load_QUAD(void *nand_addr) {
-  struct mspi_cmd cmd = {0};
+  struct mspi_cmd cmd;
+  memset(cmd, 0, sizeof(struct mspi_cmd));
+
   cmd.is_double_mem = IS_DUAL_MEM;
   cmd.fun_mode = WRITE;
 
@@ -230,7 +248,9 @@ struct mspi_cmd mspi_device_page_load_QUAD(void *nand_addr) {
 }
 
 struct mspi_cmd mspi_device_page_program(void *nand_addr) {
-  struct mspi_cmd cmd = {0};
+  struct mspi_cmd cmd;
+  memset(cmd, 0, sizeof(struct mspi_cmd));
+
   cmd.is_double_mem = IS_DUAL_MEM;
   cmd.fun_mode = WRITE;
 
@@ -245,7 +265,9 @@ struct mspi_cmd mspi_device_page_program(void *nand_addr) {
 }
 
 struct mspi_cmd mspi_device_block_erase(void *nand_addr) {
-  struct mspi_cmd cmd = {0};
+  struct mspi_cmd cmd;
+  memset(cmd, 0, sizeof(struct mspi_cmd));
+
   cmd.is_double_mem = IS_DUAL_MEM;
   cmd.fun_mode = WRITE;
 
@@ -260,7 +282,9 @@ struct mspi_cmd mspi_device_block_erase(void *nand_addr) {
 }
 
 struct mspi_cmd mspi_device_wait_write_enable(void *) {
-  struct mspi_cmd cmd = {0};
+  struct mspi_cmd cmd;
+  memset(cmd, 0, sizeof(struct mspi_cmd));
+
   cmd.is_double_mem = IS_DUAL_MEM;
   cmd.fun_mode = AUTOPOLLING;
 
