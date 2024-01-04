@@ -173,7 +173,7 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
   // enable the peripheral
   OCTOSPI1->CR |= (OCTOSPI_CR_EN);
   // set intruction, address (if in use)
-  OCTOSPI1->CCR |= (cmd.instr_cmd << OCTOSPI_IR_INSTRUCTION_Pos);
+  OCTOSPI1->IR |= (cmd.instr_cmd << OCTOSPI_IR_INSTRUCTION_Pos);
   // if read functional mode enable the dma pull channel before sending the
   // address
   if (cmd.data_mode > 0) {
@@ -225,9 +225,9 @@ u16 mspi_autopoll_wait(struct mspi_cmd (*device_fun_handler)(void *),
   // set functional mode
   OCTOSPI1->CCR |= ((cmd.fun_mode << OCTOSPI_CR_FMODE_Pos));
   // set *-MODES (number of transfer lines)
-  OCTOSPI1->CCR |= ((cmd.instr_mode << OCTOSPI_CCR_IMODE_Pos) |
-                    (cmd.addr_mode << OCTOSPI_CCR_ADMODE_Pos) |
-                    (cmd.data_mode << OCTOSPI_CCR_DMODE_Pos));
+  OCTOSPI1->IR |= ((cmd.instr_mode << OCTOSPI_CCR_IMODE_Pos) |
+                   (cmd.addr_mode << OCTOSPI_CCR_ADMODE_Pos) |
+                   (cmd.data_mode << OCTOSPI_CCR_DMODE_Pos));
 
   // set length of *-PHASES (if in use)
   if (cmd.addr_mode > 0) {
