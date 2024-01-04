@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include <string.h>
 
 #include "stm32l4r9_module_mspi.h"
 #include "stm32l4r9xx.h"
