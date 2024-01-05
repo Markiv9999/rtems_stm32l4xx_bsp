@@ -120,6 +120,9 @@ void mspi_dev_cfg(void) {
 }
 
 void mspi_interface_cleanup(void) {
+  // just to test
+  RCC->AHB3RSTR |= RCC_AHB3RSTR_OSPI1RST;
+
   // cleanup of functional registers
   OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
   OCTOSPI1->CCR &=
@@ -136,11 +139,9 @@ void mspi_interface_cleanup(void) {
 
   // clear flags
   // CTOF seems is not defined in the cmsis header
-  /*
   OCTOSPI1->FCR |= (OCTOSPI_FCR_CSMF);
   OCTOSPI1->FCR |= (OCTOSPI_FCR_CTCF);
   OCTOSPI1->FCR |= (OCTOSPI_FCR_CTEF);
-  */
 }
 
 u16 mspi_interface_wait_busy(void) {
