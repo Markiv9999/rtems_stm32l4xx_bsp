@@ -197,6 +197,9 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
     }
   }
 
+  // try to reset FTF flag
+  OCTOSPI1->SR &= ~(OCTOSPI_SR_FTF);
+
   // wait for the transaction to complete (+ timeout and abort)
   if (mspi_interface_wait_busy()) {
     OCTOSPI1->CR &= ~(OCTOSPI_CR_EN); // disable the interface in anay case
