@@ -30,15 +30,19 @@ struct mspi_cmd mspi_device_wait_write_enable(void *);
 
 u32 RA_gen(struct nand_addr nand_addr) {
   u32 RA = {0};
+  /*
   RA |= (nand_addr.block << 17);
   RA |= (nand_addr.page << 11);
   RA >>= 8;
+  */
+  RA |= (nand_addr.block << 5);
+  RA |= (nand_addr.page);
   return RA;
 }
 
 u32 CA_gen(struct nand_addr nand_addr) {
   u32 CA = {0};
-  CA |= ((nand_addr.block & 0x01) << 12);
+  // CA |= ((nand_addr.block & 0x01) << 12);
   CA |= (nand_addr.column);
   return CA;
 }
