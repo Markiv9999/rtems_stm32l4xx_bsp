@@ -130,15 +130,11 @@ void mspi_interface_cleanup(void) {
   OCTOSPI1->AR &= ~(OCTOSPI_AR_ADDRESS_Msk);
   OCTOSPI1->DR &= ~(OCTOSPI_DR_DATA_Msk);
 
-  // cleanup of functional registers
-  OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
-  OCTOSPI1->CCR &=
-      ~(OCTOSPI_CR_FMODE | OCTOSPI_CCR_IMODE | OCTOSPI_CCR_ADMODE |
-        OCTOSPI_CCR_DMODE | OCTOSPI_CCR_ADSIZE | OCTOSPI_IR_INSTRUCTION);
-
-  OCTOSPI1->DLR &= ~(OCTOSPI_DLR_DL);
-  OCTOSPI1->AR &= ~(OCTOSPI_AR_ADDRESS_Msk);
-  OCTOSPI1->DR &= ~(OCTOSPI_DR_DATA_Msk);
+  // clear flags
+  // CTOF seems is not defined in the cmsis header
+  OCTOSPI1->FCR |= (OCTOSPI_FCR_CSMF);
+  OCTOSPI1->FCR |= (OCTOSPI_FCR_CTCF);
+  OCTOSPI1->FCR |= (OCTOSPI_FCR_CTEF);
 }
 
 u16 mspi_interface_wait_busy(void) {
