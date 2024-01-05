@@ -120,9 +120,6 @@ void mspi_dev_cfg(void) {
 }
 
 void mspi_interface_cleanup(void) {
-  // just to test
-  RCC->AHB3RSTR |= RCC_AHB3RSTR_OSPI1RST;
-
   // cleanup of functional registers
   OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
   OCTOSPI1->CCR &=
@@ -161,7 +158,7 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
   // PENDING save interface registers for check
   mspi_interface_cleanup();
   // set functional mode
-  OCTOSPI1->CCR |= ((cmd.fun_mode << OCTOSPI_CR_FMODE_Pos));
+  OCTOSPI1->CR |= ((cmd.fun_mode << OCTOSPI_CR_FMODE_Pos));
   // set *-MODES (number of transfer lines)
   OCTOSPI1->CCR |= ((cmd.instr_mode << OCTOSPI_CCR_IMODE_Pos) |
                     (cmd.addr_mode << OCTOSPI_CCR_ADMODE_Pos) |
@@ -244,7 +241,7 @@ u16 mspi_autopoll_wait(struct mspi_cmd (*device_fun_handler)(void *),
   mspi_interface_cleanup();
 
   // set functional mode
-  OCTOSPI1->CCR |= ((cmd.fun_mode << OCTOSPI_CR_FMODE_Pos));
+  OCTOSPI1->CR |= ((cmd.fun_mode << OCTOSPI_CR_FMODE_Pos));
   // set *-MODES (number of transfer lines)
   OCTOSPI1->IR |= ((cmd.instr_mode << OCTOSPI_CCR_IMODE_Pos) |
                    (cmd.addr_mode << OCTOSPI_CCR_ADMODE_Pos) |
