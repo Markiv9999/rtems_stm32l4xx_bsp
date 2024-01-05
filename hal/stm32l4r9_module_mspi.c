@@ -130,6 +130,10 @@ void mspi_interface_cleanup(void) {
   OCTOSPI1->AR &= ~(OCTOSPI_AR_ADDRESS_Msk);
   OCTOSPI1->DR &= ~(OCTOSPI_DR_DATA_Msk);
 
+  // disable mspi push pull dma channels
+  DMA1_Channel1->CCR &= ~(DMA_CCR_EN);
+  DMA1_Channel2->CCR &= ~(DMA_CCR_EN);
+
   // clear flags
   // CTOF seems is not defined in the cmsis header
   OCTOSPI1->FCR |= (OCTOSPI_FCR_CSMF);
