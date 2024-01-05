@@ -136,9 +136,11 @@ void mspi_interface_cleanup(void) {
 
   // clear flags
   // CTOF seems is not defined in the cmsis header
+  /*
   OCTOSPI1->FCR |= (OCTOSPI_FCR_CSMF);
   OCTOSPI1->FCR |= (OCTOSPI_FCR_CTCF);
   OCTOSPI1->FCR |= (OCTOSPI_FCR_CTEF);
+  */
 }
 
 u16 mspi_interface_wait_busy(void) {
