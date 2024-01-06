@@ -179,7 +179,7 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
   if (cmd.data_mode > 0) {
     if (cmd.fun_mode == 0b01) { // read -- dma pull
       // enable dma channel
-      // DMA1_Channel2->CCR |= DMA_CCR_EN;
+      DMA1_Channel2->CCR |= DMA_CCR_EN;
     }
   }
   // Set the address if needed by the command
