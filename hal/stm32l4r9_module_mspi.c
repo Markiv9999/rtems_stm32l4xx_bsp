@@ -8,6 +8,8 @@
  *       INTERFACE SPECIFIC METHODS
  * --------------------------------------------------------------------------- *
  */
+extern char dma_push_buffer;
+extern char dma_pull_buffer;
 
 int mspi_init(void) {
   /* this procedure satisfy the following functions:
@@ -179,8 +181,6 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
   // if read functional mode enable the dma pull channel before sending the
   // address
 
-  extern char dma_push_buffer[MT29_PAGE_SIZE];
-  extern char dma_pull_buffer[MT29_PAGE_SIZE];
   if (cmd.data_mode > 0) {
     if (cmd.fun_mode == 0b01) { // read -- dma pull
     }
@@ -272,9 +272,7 @@ u16 mspi_autopoll_wait(struct mspi_cmd (*device_fun_handler)(void *),
   }
   // Set the address if needed by the command
   if (cmd.addr_mode > 0) {
-    OCTOSPI1->AR |=
-        (cmd.addr_cmd
-         << OCTOSPI_AR_ADDRESS_Pos); // for now even plane, beginning of page
+    OCTOSPI1->AR |= (cmd.addr_cmd << OCTOSPI_AR_ADDRESS_Pos);
   }
 
   // if read functional mode enable the dma pull channel before sending the
