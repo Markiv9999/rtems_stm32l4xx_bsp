@@ -198,11 +198,13 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
     }
   }
 
+  /*
   // wait for the transaction to complete (+ timeout and abort)
   if (mspi_interface_wait_busy()) {
     OCTOSPI1->CR &= ~(OCTOSPI_CR_EN); // disable the interface in anay case
     return ERROR_MSPI_INTERFACE_STUCK;
   }
+  */
 
   if (cmd.data_mode > 0) {
     if (cmd.fun_mode == 0b00) { // write -- dma push
