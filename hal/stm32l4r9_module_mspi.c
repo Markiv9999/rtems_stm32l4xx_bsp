@@ -194,8 +194,6 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
     if (cmd.fun_mode == 0b00) { // write -- dma push
       // enable dma channel
       DMA1_Channel1->CCR |= DMA_CCR_EN;
-      // try to reset FTF flag
-      OCTOSPI1->SR &= ~(OCTOSPI_SR_FTF);
     }
     if (cmd.fun_mode == 0b01) { // read  -- dma push
       // enable dma channel
