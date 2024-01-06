@@ -176,25 +176,31 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
   OCTOSPI1->IR |= (cmd.instr_cmd << OCTOSPI_IR_INSTRUCTION_Pos);
   // if read functional mode enable the dma pull channel before sending the
   // address
+
+  extern char dma_push_buffer[MT29_PAGE_SIZE];
+  extern char dma_pull_buffer[MT29_PAGE_SIZE];
   if (cmd.data_mode > 0) {
     if (cmd.fun_mode == 0b01) { // read -- dma pull
-      // enable dma channel
-      DMA1_Channel2->CCR |= DMA_CCR_EN;
     }
   }
   // Set the address if needed by the command
   if (cmd.addr_mode > 0) {
-    OCTOSPI1->AR |=
-        (cmd.addr_cmd
-         << OCTOSPI_AR_ADDRESS_Pos); // for now even plane, beginning of page
+    OCTOSPI1->AR |= (cmd.addr_cmd << OCTOSPI_AR_ADDRESS_Pos);
   }
 
   // if read functional mode enable the dma pull channel before sending the
   // address
   if (cmd.data_mode > 0) {
     if (cmd.fun_mode == 0b00) { // write -- dma push
-      // enable dma channel
-      DMA1_Channel1->CCR |= DMA_CCR_EN;
+      // feed data manually
+      for (uint32_t i = 0; i < MT29_PAGE_SIZE; i++) {
+        OCTOSPI1->DR = dma_push_buffer[i];
+      }
+    }
+    if (cmd.fun_mode == 0b01) { // read -- dma pull
+      for (uint32_t i = 0; i < MT29_PAGE_SIZE; i++) {
+        dma_pull_buffer[i] = OCTOSPI1->DR;
+      }
     }
   }
 
@@ -204,6 +210,7 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
     return ERROR_MSPI_INTERFACE_STUCK;
   }
 
+  /*
   if (cmd.data_mode > 0) {
     if (cmd.fun_mode == 0b00) { // write -- dma push
       // enable dma channel
@@ -214,6 +221,7 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
       DMA1_Channel2->CCR &= ~(DMA_CCR_EN);
     }
   }
+  */
 
   OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
 
