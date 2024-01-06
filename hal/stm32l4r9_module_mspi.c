@@ -1,8 +1,6 @@
 #include "stm32l4r9_module_mspi.h"
 #include "stm32l4r9xx.h"
 
-#include <stm32l4r9_module_mspi_mt29.h>
-
 /**
  * --------------------------------------------------------------------------- *
  *       INTERFACE SPECIFIC METHODS
