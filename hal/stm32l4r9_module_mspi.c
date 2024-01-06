@@ -188,8 +188,6 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
 
   // if read functional mode enable the dma pull channel before sending the
   // address
-#define MT29_PAGE_W_SIZE 512
-#define MT29_PAGE_SIZE (MT29_PAGE_W_SIZE * 4)
   if (cmd.data_mode > 0) {
     if (cmd.fun_mode == 0b00) { // write -- dma push
       // feed data manually
