@@ -194,7 +194,7 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
   if (cmd.data_mode > 0) {
     if (cmd.fun_mode == 0b00) { // write -- dma push
       // enable dma channel
-      DMA1_Channel1->CCR |= DMA_CCR_EN;
+      // DMA1_Channel1->CCR |= DMA_CCR_EN;
     }
   }
 
@@ -215,7 +215,7 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
     }
   }
 
-  OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
+  // OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
 
   return EXIT_SUCCESS;
 }
