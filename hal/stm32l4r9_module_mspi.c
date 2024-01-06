@@ -179,6 +179,7 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
   if (cmd.data_mode > 0) {
     if (cmd.fun_mode == 0b01) { // read -- dma pull
       // enable dma channel
+      DMA1_Channel2->CCR |= DMA_CCR_EN;
     }
   }
   // Set the address if needed by the command
@@ -194,10 +195,6 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
     if (cmd.fun_mode == 0b00) { // write -- dma push
       // enable dma channel
       DMA1_Channel1->CCR |= DMA_CCR_EN;
-    }
-    if (cmd.fun_mode == 0b01) { // read  -- dma push
-      // enable dma channel
-      DMA1_Channel2->CCR |= DMA_CCR_EN;
     }
   }
 
