@@ -8,8 +8,8 @@
  *       INTERFACE SPECIFIC METHODS
  * --------------------------------------------------------------------------- *
  */
-extern char dma_push_buffer;
-extern char dma_pull_buffer;
+extern char dma_push_buffer[MT29_PAGE_SIZE];
+extern char dma_pull_buffer[MT29_PAGE_SIZE];
 
 int mspi_init(void) {
   /* this procedure satisfy the following functions:
