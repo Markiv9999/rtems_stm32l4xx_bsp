@@ -179,7 +179,7 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
   if (cmd.data_mode > 0) {
     if (cmd.fun_mode == 0b01) { // read -- dma pull
       // enable dma channel
-      // DMA1_Channel2->CCR |= DMA_CCR_EN;
+      DMA1_Channel2->CCR |= DMA_CCR_EN;
     }
   }
   // Set the address if needed by the command
@@ -194,30 +194,28 @@ u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
   if (cmd.data_mode > 0) {
     if (cmd.fun_mode == 0b00) { // write -- dma push
       // enable dma channel
-      // DMA1_Channel1->CCR |= DMA_CCR_EN;
+      DMA1_Channel1->CCR |= DMA_CCR_EN;
     }
   }
 
-  /*
   // wait for the transaction to complete (+ timeout and abort)
   if (mspi_interface_wait_busy()) {
     OCTOSPI1->CR &= ~(OCTOSPI_CR_EN); // disable the interface in anay case
     return ERROR_MSPI_INTERFACE_STUCK;
   }
-  */
 
   if (cmd.data_mode > 0) {
     if (cmd.fun_mode == 0b00) { // write -- dma push
-      // enable dma channel
+      // disable dma channel
       DMA1_Channel1->CCR &= ~(DMA_CCR_EN);
     }
     if (cmd.fun_mode == 0b01) { // read  -- dma push
-      // enable dma channel
+      // disable dma channel
       DMA1_Channel2->CCR &= ~(DMA_CCR_EN);
     }
   }
 
-  // OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
+  OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
 
   return EXIT_SUCCESS;
 }
@@ -264,9 +262,7 @@ u16 mspi_autopoll_wait(struct mspi_cmd (*device_fun_handler)(void *),
   }
   // Set the address if needed by the command
   if (cmd.addr_mode > 0) {
-    OCTOSPI1->AR |=
-        (cmd.addr_cmd
-         << OCTOSPI_AR_ADDRESS_Pos); // for now even plane, beginning of page
+    OCTOSPI1->AR |= (cmd.addr_cmd << OCTOSPI_AR_ADDRESS_Pos);
   }
 
   // if read functional mode enable the dma pull channel before sending the
