@@ -99,7 +99,7 @@
  * }
  */
 
-#define STM32L4_UART_DEFAULT_BAUD 115200
+#define STM32L4_UART_DEFAULT_BAUD 1000
 /* TODO: move prototypes */
 void stm32l4_uart_initialize(rtems_termios_device_context *base);
 
@@ -212,7 +212,7 @@ static void stm32l4_debug_console_early_init(char c);
 static void stm32l4_debug_console_early_init(char c) {
   uart_init(UART2, STM32L4_UART_DEFAULT_BAUD);
   /* TODO: Put back */
-  //uart_write_byte(UART2, c);
+  // uart_write_byte(UART2, c);
   /* TEST: just for testing */
   uart_write_buf(UART2, "play victory dance\n\r", 20);
 }
