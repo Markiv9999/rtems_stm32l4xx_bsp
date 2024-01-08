@@ -210,11 +210,11 @@ rtems_status_code console_initialize(rtems_device_major_number major,
 static void stm32l4_debug_console_early_init(char c);
 
 static void stm32l4_debug_console_early_init(char c) {
-  uart_init(UART2, STM32L4_UART_DEFAULT_BAUD);
   /* TODO: Put back */
-  //uart_write_byte(UART2, c);
+  // uart_write_byte(UART2, c);
+  // uart_init(UART2, STM32L4_UART_DEFAULT_BAUD);
   /* TEST: just for testing */
-  uart_write_buf(UART2, "play victory dance\n\r", 20);
+  // uart_write_buf(UART2, "play victory dance\n\r", 20);
 }
 
 /**
