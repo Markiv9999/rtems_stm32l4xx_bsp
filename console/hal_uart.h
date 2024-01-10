@@ -8,7 +8,8 @@
 
 #include "stm32l4r9xx.h"
 
-#define FREQ 4000000
+// #define FREQ 4000000
+#define FREQ 120000000
 #define BIT(x) (1UL << (x))
 #define PIN(bank, num) ((((bank) - 'A') << 8) | (num))
 #define PINNO(pin) (pin & 255)

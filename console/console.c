@@ -99,7 +99,7 @@
  * }
  */
 
-#define STM32L4_UART_DEFAULT_BAUD 1000
+#define STM32L4_UART_DEFAULT_BAUD 9600
 /* TODO: move prototypes */
 void stm32l4_uart_initialize(rtems_termios_device_context *base);
 
