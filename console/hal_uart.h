@@ -1,4 +1,6 @@
 #pragma once
+/* this is an EXTREMELY CRUDE and temporary uart driver
+ */
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -8,8 +10,8 @@
 
 #include "stm32l4r9xx.h"
 
-// #define FREQ 4000000
-#define FREQ 120000000
+// WARNING: Substitute with bsp system headers
+#define FREQ 4000000 // CPU frequency
 #define BIT(x) (1UL << (x))
 #define PIN(bank, num) ((((bank) - 'A') << 8) | (num))
 #define PINNO(pin) (pin & 255)
@@ -55,8 +57,8 @@ static inline void uart_init(USART_TypeDef *uart, unsigned long baud) {
   uint8_t af = 7;          // Alternate function
   uint16_t rx = 0, tx = 0; // pins
 
-  // enable clock for GPIOA YES! ottimo lavoro, serviva
-  RCC->AHB2ENR |= BIT(0);
+  // enable clock for GPIOD YES! ottimo lavoro, serviva
+  RCC->AHB2ENR |= BIT(3);
 
   // Tochange
   if (uart == UART1)
@@ -69,7 +71,7 @@ static inline void uart_init(USART_TypeDef *uart, unsigned long baud) {
   // Tochange
   // if (uart == UART1) tx = PIN('A', 9), rx = PIN('A', 10);
   if (uart == UART2)
-    tx = PIN('A', 2), rx = PIN('A', 3);
+    tx = PIN('D', 5), rx = PIN('D', 6);
   // if (uart == UART3) tx = PIN('D', 8), rx = PIN('D', 9);
 
   // Tochek
@@ -77,8 +79,9 @@ static inline void uart_init(USART_TypeDef *uart, unsigned long baud) {
   gpio_set_af(tx, af);
   gpio_set_mode(rx, GPIO_MODE_AF);
   gpio_set_af(rx, af);
-  uart->CR1 = 0;                         // Disable this UART
-  uart->BRR = FREQ / baud;               // FREQ is a UART bus frequency
+  uart->CR1 = 0;           // Disable this UART
+  uart->BRR = FREQ / baud; // FREQ is a UART bus frequency
+  // uart->CR2 |= BIT(15);                  // sets tx/rx switch
   uart->CR1 |= BIT(0) | BIT(2) | BIT(3); // Set UE, RE, TE
 }
 

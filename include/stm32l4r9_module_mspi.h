@@ -38,6 +38,7 @@ struct mspi_cmd {
    */
 
   uint8_t is_double_mem;
+  uint8_t req_dma;
 
   u32 fun_mode;
   u32 instr_mode;
@@ -73,15 +74,16 @@ struct mspi_interface {
  *       INTERFACE SPECIFIC METHODS
  * --------------------------------------------------------------------------- *
  */
-int mspi_init(void);
-void mspi_gpio_cfg(void);
-void mspi_sys_cfg(void);
-void mspi_dev_cfg(void);
-void mspi_interface_cleanup(void);
-u16 mspi_interface_wait_busy(void);
+int mspi_init(struct mspi_interface);
+void mspi_gpio_cfg(struct mspi_interface);
+void mspi_sys_cfg(struct mspi_interface);
+void mspi_dev_cfg(struct mspi_interface);
+void mspi_interface_cleanup(struct mspi_interface);
+u16 mspi_interface_wait_busy(struct mspi_interface);
 
 // methods declarations
-u16 mspi_transfer_dma(struct mspi_cmd (*device_fun_handler)(void *),
-                      struct mspi_interface, void *);
-u16 mspi_autopoll_wait(struct mspi_cmd (*device_fun_handler)(void *),
-                       struct mspi_interface, void *, u32, u32);
+u16 mspi_transfer_dma(struct mspi_interface,
+                      struct mspi_cmd (*device_fun_handler)(void *), void *);
+u16 mspi_autopoll_wait(struct mspi_interface,
+                       struct mspi_cmd (*device_fun_handler)(void *), void *,
+                       u32, u32);

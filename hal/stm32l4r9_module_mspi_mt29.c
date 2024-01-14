@@ -176,6 +176,8 @@ struct mspi_cmd mspi_device_page_read_from_cache_SINGLE(void *nand_addr) {
   cmd.data_mode = SINGLE;
   cmd.data_size = MT29_PAGE_SIZE - 1;
 
+  cmd.req_dma = 1;
+
   return cmd;
 }
 
@@ -193,6 +195,8 @@ struct mspi_cmd mspi_device_page_read_from_cache_QUAD(void *nand_addr) {
 
   cmd.data_mode = QUAD;
   cmd.data_size = MT29_PAGE_SIZE - 1;
+
+  cmd.req_dma = 1;
 
   return cmd;
 }
@@ -212,6 +216,8 @@ struct mspi_cmd mspi_device_page_load_SINGLE(void *nand_addr) {
   cmd.data_mode = SINGLE;
   cmd.data_size = MT29_PAGE_SIZE - 1;
 
+  cmd.req_dma = 1;
+
   return cmd;
 }
 
@@ -229,6 +235,8 @@ struct mspi_cmd mspi_device_page_load_QUAD(void *nand_addr) {
 
   cmd.data_mode = QUAD;
   cmd.data_size = MT29_PAGE_SIZE - 1;
+
+  cmd.req_dma = 1;
 
   return cmd;
 }
