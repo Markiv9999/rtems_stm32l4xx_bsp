@@ -86,7 +86,7 @@ extern "C" {
 /* #define STM32L4P5xx */ /*!< STM32L4Q5xx Devices */
 /* #define STM32L4R5xx */ /*!< STM32L4R5xx Devices */
 /* #define STM32L4R7xx */ /*!< STM32L4R7xx Devices */
-/* #define STM32L4R9xx */ /*!< STM32L4R9xx Devices */
+#define STM32L4R9xx       /*!< STM32L4R9xx Devices */
 /* #define STM32L4S5xx */ /*!< STM32L4S5xx Devices */
 /* #define STM32L4S7xx */ /*!< STM32L4S7xx Devices */
 /* #define STM32L4S9xx */ /*!< STM32L4S9xx Devices */
