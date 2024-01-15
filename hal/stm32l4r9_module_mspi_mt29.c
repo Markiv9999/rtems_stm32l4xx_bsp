@@ -91,6 +91,7 @@ struct mspi_cmd mspi_device_write_unlock(void *placeholder) {
   cmd.data_mode = SINGLE;
   cmd.data_size = _8_bit;
   cmd.data_cmd = 0x00;
+  cmd.data_cmd_embedded = 0x1;
 
   return cmd;
 }
@@ -110,6 +111,7 @@ struct mspi_cmd mspi_device_write_lock(void *placeholder) {
   cmd.data_mode = SINGLE;
   cmd.data_size = _8_bit;
   cmd.data_cmd = 0b01111100;
+  cmd.data_cmd_embedded = 0x1;
 
   return cmd;
 }
@@ -176,8 +178,6 @@ struct mspi_cmd mspi_device_page_read_from_cache_SINGLE(void *nand_addr) {
   cmd.data_mode = SINGLE;
   cmd.data_size = MT29_PAGE_SIZE - 1;
 
-  cmd.req_dma = 1;
-
   return cmd;
 }
 
@@ -195,8 +195,6 @@ struct mspi_cmd mspi_device_page_read_from_cache_QUAD(void *nand_addr) {
 
   cmd.data_mode = QUAD;
   cmd.data_size = MT29_PAGE_SIZE - 1;
-
-  cmd.req_dma = 1;
 
   return cmd;
 }
@@ -216,8 +214,6 @@ struct mspi_cmd mspi_device_page_load_SINGLE(void *nand_addr) {
   cmd.data_mode = SINGLE;
   cmd.data_size = MT29_PAGE_SIZE - 1;
 
-  cmd.req_dma = 1;
-
   return cmd;
 }
 
@@ -235,8 +231,6 @@ struct mspi_cmd mspi_device_page_load_QUAD(void *nand_addr) {
 
   cmd.data_mode = QUAD;
   cmd.data_size = MT29_PAGE_SIZE - 1;
-
-  cmd.req_dma = 1;
 
   return cmd;
 }
@@ -271,7 +265,7 @@ struct mspi_cmd mspi_device_block_erase(void *nand_addr) {
   return cmd;
 }
 
-struct mspi_cmd mspi_device_wait_write_enable(void *) {
+struct mspi_cmd mspi_device_wait_write_enable(void *nand_addr) {
   struct mspi_cmd cmd = {0};
   cmd.is_double_mem = IS_DUAL_MEM;
   cmd.fun_mode = AUTOPOLLING;
@@ -285,6 +279,10 @@ struct mspi_cmd mspi_device_wait_write_enable(void *) {
 
   cmd.data_mode = SINGLE;
   cmd.data_size = _8_bit;
+  cmd.data_cmd_embedded = 0x1;
+
+  cmd.autopoll_mask = WEL_MASK;
+  cmd.autopoll_match = WEL_MATCH;
 
   return cmd;
 }
@@ -300,6 +298,7 @@ struct mspi_device mspi_device_constr(void) {
   dev.write_unlock = &mspi_device_write_unlock;
   dev.write_lock = &mspi_device_write_lock;
   dev.write_enable = &mspi_device_write_enable;
+  dev.write_enable_polled = &mspi_device_wait_write_enable;
   dev.get_status = &mspi_device_get_status;
   dev.page_read_from_nand = &mspi_device_page_read_from_nand;
   dev.page_read_from_cache_SINGLE = &mspi_device_page_read_from_cache_SINGLE;
@@ -309,7 +308,6 @@ struct mspi_device mspi_device_constr(void) {
   dev.page_program = &mspi_device_page_program;
   dev.block_erase = &mspi_device_block_erase;
 
-  dev.write_enable = &mspi_device_write_enable; // TODO implement
   // dev.wait_program_complete       = &mspi_device_wait_program_complete;
 
   return dev;

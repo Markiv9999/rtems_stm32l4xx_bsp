@@ -37,6 +37,7 @@ struct mspi_device {
   struct mspi_cmd (*write_unlock)(void *);
   struct mspi_cmd (*write_lock)(void *);
   struct mspi_cmd (*write_enable)(void *);
+  struct mspi_cmd (*write_enable_polled)(void *);
   struct mspi_cmd (*get_status)(void *);
   struct mspi_cmd (*page_read_from_nand)(void *);
   struct mspi_cmd (*page_read_from_cache_SINGLE)(void *);

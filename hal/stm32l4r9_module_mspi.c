@@ -1,8 +1,6 @@
 #include "stm32l4r9_module_mspi.h"
 #include "stm32l4r9xx.h"
-
-void mspi_dma_push_init(void); // TODO: move to headers
-void mspi_dma_pull_init(void); // TODO: move to headers
+#include <stdint.h>
 
 extern char dma_push_buffer[];
 extern char dma_pull_buffer[];
@@ -264,17 +262,16 @@ void mspi_interface_cleanup(struct mspi_interface device) {
   if (device.interface_select == 0x02) {
     // cleanup of functional registers
     OCTOSPI2->CR &= ~(OCTOSPI_CR_EN);
-    OCTOSPI2->CCR &=
-        ~(OCTOSPI_CR_FMODE | OCTOSPI_CCR_IMODE | OCTOSPI_CCR_ADMODE |
-          OCTOSPI_CCR_DMODE | OCTOSPI_CCR_ADSIZE | OCTOSPI_IR_INSTRUCTION);
+    OCTOSPI2->CCR &= ~(OCTOSPI_CR_FMODE);
+    OCTOSPI2->CCR &= ~(OCTOSPI_CCR_IMODE);
+    OCTOSPI2->CCR &= ~(OCTOSPI_CCR_ADMODE);
+    OCTOSPI2->CCR &= ~(OCTOSPI_CCR_DMODE);
+    OCTOSPI2->CCR &= ~(OCTOSPI_CCR_ADSIZE);
+    OCTOSPI2->CCR &= ~(OCTOSPI_IR_INSTRUCTION);
 
     OCTOSPI2->DLR &= ~(OCTOSPI_DLR_DL);
     OCTOSPI2->AR &= ~(OCTOSPI_AR_ADDRESS_Msk);
     OCTOSPI2->DR &= ~(OCTOSPI_DR_DATA_Msk);
-
-    // disable mspi push pull dma channels
-    DMA1_Channel1->CCR &= ~(DMA_CCR_EN);
-    DMA1_Channel2->CCR &= ~(DMA_CCR_EN);
 
     // clear flags
     // CTOF seems is not defined in the cmsis header
@@ -299,307 +296,167 @@ u16 mspi_interface_wait_busy(struct mspi_interface device) {
   }
 }
 
-// TODO (add interface specifier f.e. OCTOSPI1/OCTOSPI2)
-u16 mspi_transfer_dma(struct mspi_interface device,
-                      struct mspi_cmd (*device_fun_handler)(void *),
-                      void *argument) {
+u16 mspi_transfer(
+    struct mspi_interface device_context,
+    struct mspi_cmd (*device_fun_handler)(void *), // TODO: typedef this one
+    void *argument) {
 
   struct mspi_cmd cmd = {0};
   cmd = device_fun_handler(argument);
+  mspi_interface_cleanup(device_context);
 
-  // PENDING save interface registers for check
-  mspi_interface_cleanup(device);
-
-  if (device.interface_select == 0x01) {
-    // set functional mode
+  if (device_context.interface_select == 0x01) {
+    /* configure for transfer */
     OCTOSPI1->CR |= ((cmd.fun_mode << OCTOSPI_CR_FMODE_Pos));
-    // set *-MODES (number of transfer lines)
     OCTOSPI1->CCR |= ((cmd.instr_mode << OCTOSPI_CCR_IMODE_Pos) |
                       (cmd.addr_mode << OCTOSPI_CCR_ADMODE_Pos) |
                       (cmd.data_mode << OCTOSPI_CCR_DMODE_Pos));
-    // set length of *-PHASES (if in use)
     if (cmd.addr_mode > 0) {
       OCTOSPI1->CCR |= (cmd.addr_size << OCTOSPI_CCR_ADSIZE_Pos);
     }
     if (cmd.data_mode > 0) {
       OCTOSPI1->DLR |= (cmd.data_size << OCTOSPI_DLR_DL_Pos);
     }
-    // enable the peripheral
-    OCTOSPI1->CR |= (OCTOSPI_CR_EN);
-    // set intruction, address (if in use)
-    OCTOSPI1->IR |= (cmd.instr_cmd << OCTOSPI_IR_INSTRUCTION_Pos);
-    // if read functional mode enable the dma pull channel before sending the
-    // address
-    if (cmd.data_mode && cmd.req_dma) {
-      if (cmd.fun_mode == 0b01) { // read -- dma pull
-        // enable dma channel
-        DMA1_Channel2->CCR |= DMA_CCR_EN;
-      }
-    }
-    // Set the address if needed by the command
-    if (cmd.addr_mode > 0) {
-      OCTOSPI1->AR |=
-          (cmd.addr_cmd
-           << OCTOSPI_AR_ADDRESS_Pos); // for now even plane, beginning of page
-    }
-
-    // if read functional mode enable the dma push channel before sending the
-    // address
-    if (cmd.data_mode) {
-      if (cmd.fun_mode == 0b00) { // write -- dma push
-        if (cmd.req_dma) {
-          // enable dma channel
-          DMA1_Channel1->CCR |= DMA_CCR_EN;
-        } else {
-          // manually set data register content
-          OCTOSPI1->DR |= (cmd.data_cmd);
-        }
-      }
-    }
-
-    // wait for the transaction to complete (+ timeout and abort)
-    if (mspi_interface_wait_busy(device)) {
-      OCTOSPI1->CR &= ~(OCTOSPI_CR_EN); // disable the interface in anay case
-      return ERROR_MSPI_INTERFACE_STUCK;
-    }
-
-    if (cmd.data_mode && cmd.req_dma) {
-      if (cmd.fun_mode == 0b00) { // write -- dma push
-        // disable dma channel
-        DMA1_Channel1->CCR &= ~(DMA_CCR_EN);
-      }
-      if (cmd.fun_mode == 0b01) { // read  -- dma push
-        // disable dma channel
-        DMA1_Channel2->CCR &= ~(DMA_CCR_EN);
-      }
-    }
-
-    OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
-
-    return EXIT_SUCCESS;
-  }
-  if (device.interface_select == 0x02) {
-    // set functional mode
-    OCTOSPI2->CR |= ((cmd.fun_mode << OCTOSPI_CR_FMODE_Pos));
-    // set *-MODES (number of transfer lines)
-    OCTOSPI2->CCR |= ((cmd.instr_mode << OCTOSPI_CCR_IMODE_Pos) |
-                      (cmd.addr_mode << OCTOSPI_CCR_ADMODE_Pos) |
-                      (cmd.data_mode << OCTOSPI_CCR_DMODE_Pos));
-    // set length of *-PHASES (if in use)
-    if (cmd.addr_mode > 0) {
-      OCTOSPI2->CCR |= (cmd.addr_size << OCTOSPI_CCR_ADSIZE_Pos);
-    }
-    if (cmd.data_mode > 0) {
-      OCTOSPI2->DLR |= (cmd.data_size << OCTOSPI_DLR_DL_Pos);
-    }
-    // enable the peripheral
-    OCTOSPI2->CR |= (OCTOSPI_CR_EN);
-    // set intruction, address (if in use)
-    OCTOSPI2->IR |= (cmd.instr_cmd << OCTOSPI_IR_INSTRUCTION_Pos);
-    // if read functional mode enable the dma pull channel before sending the
-    // address
-    if (cmd.data_mode && cmd.req_dma) {
-      if (cmd.fun_mode == 0b01) { // read -- dma pull
-        // enable dma channel
-        DMA1_Channel2->CCR |= DMA_CCR_EN;
-      }
-    }
-    // Set the address if needed by the command
-    if (cmd.addr_mode > 0) {
-      OCTOSPI2->AR |=
-          (cmd.addr_cmd
-           << OCTOSPI_AR_ADDRESS_Pos); // for now even plane, beginning of page
-    }
-
-    // if read functional mode enable the dma push channel before sending the
-    // address
-    if (cmd.data_mode) {
-      if (cmd.fun_mode == 0b00) { // write -- dma push
-        if (cmd.req_dma) {
-          // enable dma channel
-          DMA1_Channel1->CCR |= DMA_CCR_EN;
-        } else {
-          // manually set data register content
-          OCTOSPI2->DR |= (cmd.data_cmd);
-        }
-      }
-    }
-
-    // wait for the transaction to complete (+ timeout and abort)
-    if (mspi_interface_wait_busy(device)) {
-      OCTOSPI2->CR &= ~(OCTOSPI_CR_EN); // disable the interface in anay case
-      return ERROR_MSPI_INTERFACE_STUCK;
-    }
-
-    if (cmd.data_mode && cmd.req_dma) {
-      if (cmd.fun_mode == 0b00) { // write -- dma push
-        // disable dma channel
-        DMA1_Channel1->CCR &= ~(DMA_CCR_EN);
-      }
-      if (cmd.fun_mode == 0b01) { // read  -- dma push
-        // disable dma channel
-        DMA1_Channel2->CCR &= ~(DMA_CCR_EN);
-      }
-    }
-
-    OCTOSPI2->CR &= ~(OCTOSPI_CR_EN);
-
-    return EXIT_SUCCESS;
-  }
-}
-
-u16 mspi_autopoll_wait(struct mspi_interface device,
-                       struct mspi_cmd (*device_fun_handler)(void *),
-                       void *argument, u32 mask, u32 match) {
-
-  struct mspi_cmd cmd = {0};
-  cmd = device_fun_handler(argument);
-
-  if (device.interface_select == 0x01) {
+    /* overrides for auto-polling mode*/
     // Set the 'mask', 'match', and 'polling interval' values.
-    OCTOSPI1->PSMKR = mask;
-    OCTOSPI1->PSMAR = match;
+    // TEST: check if creates issues when not in autopoll mode
+    OCTOSPI1->PSMKR = cmd.autopoll_mask;
+    OCTOSPI1->PSMAR = cmd.autopoll_match;
     OCTOSPI1->PIR = 0x10;
 
-    // PENDING save interface registers for check
-    mspi_interface_cleanup(device);
-
-    // set functional mode
-    OCTOSPI1->CR |= ((cmd.fun_mode << OCTOSPI_CR_FMODE_Pos));
-    // set *-MODES (number of transfer lines)
-    OCTOSPI1->IR |= ((cmd.instr_mode << OCTOSPI_CCR_IMODE_Pos) |
-                     (cmd.addr_mode << OCTOSPI_CCR_ADMODE_Pos) |
-                     (cmd.data_mode << OCTOSPI_CCR_DMODE_Pos));
-
-    // set length of *-PHASES (if in use)
-    if (cmd.addr_mode > 0) {
-      OCTOSPI1->CCR |= (cmd.addr_size << OCTOSPI_CCR_ADSIZE_Pos);
-    }
-    if (cmd.data_mode > 0) {
-      OCTOSPI1->DLR |= (cmd.data_size << OCTOSPI_DLR_DL_Pos);
-    }
-    // enable the peripheral
+    // Enable the peripheral
     OCTOSPI1->CR |= (OCTOSPI_CR_EN);
-    // set intruction, address (if in use)
+
+    // Set intruction
     OCTOSPI1->CCR |= (cmd.instr_cmd << OCTOSPI_IR_INSTRUCTION_Pos);
-    // if read functional mode enable the dma pull channel before sending the
-    // address
-    if (cmd.data_mode && cmd.req_dma) {
-      if (cmd.fun_mode == 0b01) { // read -- dma pull
-        // enable dma channel
-      }
-    }
-    // Set the address if needed by the command
+    // Set the address
     if (cmd.addr_mode > 0) {
       OCTOSPI1->AR |= (cmd.addr_cmd << OCTOSPI_AR_ADDRESS_Pos);
     }
-
-    // if read functional mode enable the dma push channel before sending the
-    // address
-    if (cmd.data_mode) {
-      if (cmd.fun_mode == 0b00) { // write -- dma push
-        if (cmd.req_dma) {
-          // enable dma channel
-          DMA1_Channel1->CCR |= DMA_CCR_EN;
+    if (cmd.data_mode) { // write -- dma push / indirect
+      if (cmd.data_cmd_embedded == 0 && cmd.fun_mode == 0b00) {
+        if (device_context.use_dma) {
+          // configure and enable dma channel
+          mspi_dma_push_init(device_context.data_ptr, device_context.size_tr);
         } else {
           // manually set data register content
-          OCTOSPI1->DR |= (cmd.data_cmd);
+          static volatile uint32_t testval = {0};
+          for (uint32_t i = 0; i < (device_context.size_tr >> 2); i++) {
+            testval = (u32) * (device_context.data_ptr + i);
+            OCTOSPI1->DR |= testval;
+            // TODO: add some kind of fifo check
+          }
+        }
+      }
+      // autopoll -- embedded data
+      if (cmd.data_cmd_embedded == 1) {
+        OCTOSPI1->DR |= cmd.data_cmd;
+      }
+
+      if (cmd.fun_mode == 0b01) { // read -- only indirect mode
+        for (uint32_t i = 0; i < (device_context.size_tr >> 2); i++) {
+          *(device_context.data_ptr + i) = OCTOSPI1->DR;
+          // TODO: add some kind of fifo check
         }
       }
     }
-
     // wait for the transaction to complete (+ timeout and abort)
-    if (mspi_interface_wait_busy(device)) {
+    if (mspi_interface_wait_busy(device_context)) {
       OCTOSPI1->CR &= ~(OCTOSPI_CR_EN); // disable the interface in anay case
       return ERROR_MSPI_INTERFACE_STUCK;
     }
 
-    // Wait for a match.
-    while (OCTOSPI1->SR & OCTOSPI_SR_BUSY) {
-    };
     // Acknowledge the 'status match flag.'
     OCTOSPI1->FCR |= (OCTOSPI_FCR_CSMF);
     // Un-set the data mode and disable auto-polling.
     OCTOSPI1->CCR &= ~(OCTOSPI_CR_FMODE | OCTOSPI_CCR_DMODE);
-    // Disable the peripheral.
+
+    // disable dma channel
+    DMA1_Channel1->CCR &= ~(DMA_CCR_EN);
+
+    // disable interface
     OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
+
     return EXIT_SUCCESS;
   }
-  if (device.interface_select == 0x02) {
-    // Set the 'mask', 'match', and 'polling interval' values.
-    OCTOSPI1->PSMKR = mask;
-    OCTOSPI1->PSMAR = match;
-    OCTOSPI1->PIR = 0x10;
-
-    // PENDING save interface registers for check
-    mspi_interface_cleanup(device);
-
-    // set functional mode
+  if (device_context.interface_select == 0x02) {
+    /* configure for transfer */
     OCTOSPI2->CR |= ((cmd.fun_mode << OCTOSPI_CR_FMODE_Pos));
-    // set *-MODES (number of transfer lines)
-    OCTOSPI2->IR |= ((cmd.instr_mode << OCTOSPI_CCR_IMODE_Pos) |
-                     (cmd.addr_mode << OCTOSPI_CCR_ADMODE_Pos) |
-                     (cmd.data_mode << OCTOSPI_CCR_DMODE_Pos));
-
-    // set length of *-PHASES (if in use)
+    OCTOSPI2->CCR |= ((cmd.instr_mode << OCTOSPI_CCR_IMODE_Pos) |
+                      (cmd.addr_mode << OCTOSPI_CCR_ADMODE_Pos) |
+                      (cmd.data_mode << OCTOSPI_CCR_DMODE_Pos));
     if (cmd.addr_mode > 0) {
       OCTOSPI2->CCR |= (cmd.addr_size << OCTOSPI_CCR_ADSIZE_Pos);
     }
     if (cmd.data_mode > 0) {
       OCTOSPI2->DLR |= (cmd.data_size << OCTOSPI_DLR_DL_Pos);
     }
-    // enable the peripheral
+    /* overrides for auto-polling mode*/
+    // Set the 'mask', 'match', and 'polling interval' values.
+    // TEST: check if creates issues when not in autopoll mode
+    OCTOSPI2->PSMKR = cmd.autopoll_mask;
+    OCTOSPI2->PSMAR = cmd.autopoll_match;
+    OCTOSPI2->PIR = 0x10;
+
+    // Enable the peripheral
     OCTOSPI2->CR |= (OCTOSPI_CR_EN);
-    // set intruction, address (if in use)
+
+    // Set intruction
     OCTOSPI2->CCR |= (cmd.instr_cmd << OCTOSPI_IR_INSTRUCTION_Pos);
-    // if read functional mode enable the dma pull channel before sending the
-    // address
-    if (cmd.data_mode && cmd.req_dma) {
-      if (cmd.fun_mode == 0b01) { // read -- dma pull
-        // enable dma channel
-      }
-    }
-    // Set the address if needed by the command
+    // Set the address
     if (cmd.addr_mode > 0) {
       OCTOSPI2->AR |= (cmd.addr_cmd << OCTOSPI_AR_ADDRESS_Pos);
     }
-
-    // if read functional mode enable the dma push channel before sending the
-    // address
-    if (cmd.data_mode) {
-      if (cmd.fun_mode == 0b00) { // write -- dma push
-        if (cmd.req_dma) {
-          // enable dma channel
-          DMA1_Channel1->CCR |= DMA_CCR_EN;
+    if (cmd.data_mode) { // write -- dma push / indirect
+      if (cmd.data_cmd_embedded == 0 && cmd.fun_mode == 0b00) {
+        if (device_context.use_dma) {
+          // configure and enable dma channel
+          mspi_dma_push_init(device_context.data_ptr, device_context.size_tr);
         } else {
           // manually set data register content
-          OCTOSPI2->DR |= (cmd.data_cmd);
+          static volatile uint32_t testval = {0};
+          for (uint32_t i = 0; i < (device_context.size_tr >> 2); i++) {
+            testval = (u32) * (device_context.data_ptr + i);
+            OCTOSPI2->DR |= testval;
+            // TODO: add some kind of fifo check
+          }
+        }
+      }
+      // autopoll -- embedded data
+      if (cmd.data_cmd_embedded == 0) {
+        OCTOSPI2->DR |= cmd.data_cmd;
+      }
+
+      if (cmd.fun_mode == 0b01) { // read -- only indirect mode
+        for (uint32_t i = 0; i < (device_context.size_tr >> 2); i++) {
+          *(device_context.data_ptr + i) = OCTOSPI2->DR;
+          // TODO: add some kind of fifo check
         }
       }
     }
-
     // wait for the transaction to complete (+ timeout and abort)
-    if (mspi_interface_wait_busy(device)) {
+    if (mspi_interface_wait_busy(device_context)) {
       OCTOSPI2->CR &= ~(OCTOSPI_CR_EN); // disable the interface in anay case
       return ERROR_MSPI_INTERFACE_STUCK;
     }
 
-    // Wait for a match.
-    while (OCTOSPI2->SR & OCTOSPI_SR_BUSY) {
-    };
     // Acknowledge the 'status match flag.'
     OCTOSPI2->FCR |= (OCTOSPI_FCR_CSMF);
     // Un-set the data mode and disable auto-polling.
     OCTOSPI2->CCR &= ~(OCTOSPI_CR_FMODE | OCTOSPI_CCR_DMODE);
-    // Disable the peripheral.
+
+    // disable dma channel
+    DMA1_Channel1->CCR &= ~(DMA_CCR_EN);
+
+    // disable interface
     OCTOSPI2->CR &= ~(OCTOSPI_CR_EN);
+
     return EXIT_SUCCESS;
   }
 }
 
 #define OCTOSPI_DR_OFF 0x050
-/*  TODO: protect the dma channels with a define guard */
-void mspi_dma_push_init(void) {
+void mspi_dma_push_init(u32 *data_ptr, u32 size_tr) {
   /* Set up DMA1_CH1 "Push" dma channel */
 
   /* Enable the dma controller 1 peripheral */
@@ -612,10 +469,11 @@ void mspi_dma_push_init(void) {
   /* TODO: set from the strcuture definition */
   DMA1_Channel1->CPAR = OCTOSPI2_R_BASE + OCTOSPI_DR_OFF;
   /* Set the target memory address in the DMA_CMARx register */
-  DMA1_Channel1->CMAR = (uint32_t)&dma_push_buffer;
+  // TEST: test if the address is correct
+  DMA1_Channel1->CMAR = (uint32_t)data_ptr;
   /* Configure the total number of data transfers in the DMA_CNDTRx register
    */
-  DMA1_Channel1->CNDTR = 2048 >> 2; // HACK: FIXME (page size)
+  DMA1_Channel1->CNDTR = size_tr >> 2;
   /* Configure the CCR register */
   DMA1_Channel1->CCR |=
       /* channel priority */
@@ -628,36 +486,7 @@ void mspi_dma_push_init(void) {
       0b11 << DMA_CCR_PSIZE_Pos |
       /* memory increment mode */
       DMA_CCR_MINC;
-}
 
-void mspi_dma_pull_init(void) {
-  /* Set up DMA1_CH2 "Pull" dma channel */
-
-  /* Enable the dma controller 1 peripheral */
-  RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
-
-  /* Clear interrupt status flags */
-  DMA1->IFCR |= DMA_IFCR_CGIF2;
-
-  /* Set the peripheral register address in the DMA_CPARx register */
-  /* TODO: set from the strcuture definition */
-  DMA1_Channel2->CPAR = OCTOSPI2_R_BASE + OCTOSPI_DR_OFF;
-  /* Set the target memory address in the DMA_CMARx register */
-  DMA1_Channel2->CMAR = (uint32_t)&dma_pull_buffer;
-  /* Configure the total number of data transfers in the DMA_CNDTRx register
-   */
-  DMA1_Channel2->CNDTR = 2048 >> 2; // HACK: FIXME (page size)
-  /* Configure the CCR register */
-  DMA1_Channel2->CCR |=
-      /* channel priority */
-      0b00 << DMA_CCR_PL_Pos |
-      /* memory size (32bit)*/
-      0b11 << DMA_CCR_MSIZE_Pos |
-      /* peripheral size (32bit)*/
-      0b11 << DMA_CCR_PSIZE_Pos |
-      /* memory increment mode */
-      DMA_CCR_MINC;
-
-  /*Configure CCR register:channel direction (read from peripheral) */
-  DMA1_Channel2->CCR &= ~(DMA_CCR_DIR);
+  /* Activate the dma channel */
+  DMA1_Channel1->CCR |= DMA_CCR_EN;
 }

@@ -38,7 +38,6 @@ struct mspi_cmd {
    */
 
   uint8_t is_double_mem;
-  uint8_t req_dma;
 
   u32 fun_mode;
   u32 instr_mode;
@@ -51,12 +50,22 @@ struct mspi_cmd {
   unsigned int instr_cmd;
   unsigned int addr_cmd;
   unsigned int data_cmd;
+  u8 data_cmd_embedded;
+
+  u32 autopoll_mask;
+  u32 autopoll_match;
 };
 
 struct mspi_interface {
+  /* device characteristics */
   u8 interface_select;
   u32 speed_hz;
-  u32 op_timeout;
+  u32 timeout;
+
+  /* transfer context */
+  u8 use_dma;
+  u32 *data_ptr;
+  u32 size_tr; // size in bytes of the transfer
 
   // u32* dma_peripheral_addr; -- not needed set up at configuration of dma
   // controller u32* dma_memory_addr; -- not needed set up at configuration of
@@ -65,8 +74,6 @@ struct mspi_interface {
   // function handling function pointers
   void (*registers_cleanup)(void);
   u16 (*wait_busy)(void);
-  // u16 (*mspi_data_tx_handler)(void); -- not needed, using only dma
-  // u16 (*mspi_data_rx_handler)(void); -- not needed, using only dma
 };
 
 /**
@@ -82,8 +89,6 @@ void mspi_interface_cleanup(struct mspi_interface);
 u16 mspi_interface_wait_busy(struct mspi_interface);
 
 // methods declarations
-u16 mspi_transfer_dma(struct mspi_interface,
-                      struct mspi_cmd (*device_fun_handler)(void *), void *);
-u16 mspi_autopoll_wait(struct mspi_interface,
-                       struct mspi_cmd (*device_fun_handler)(void *), void *,
-                       u32, u32);
+u16 mspi_transfer(struct mspi_interface,
+                  struct mspi_cmd (*device_fun_handler)(void *), void *);
+void mspi_dma_push_init(u32 *data_prt, u32 size_tr);
