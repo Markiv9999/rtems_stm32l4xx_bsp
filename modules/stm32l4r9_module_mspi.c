@@ -43,69 +43,102 @@ void mspi_gpio_cfg(struct mspi_interface device) {
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
 
-    // configure alternate function for CLK and CS
-    GPIOB->AFR[1] &= ~GPIO_AFRH_AFSEL10_Msk;
-    GPIOB->AFR[1] &= ~GPIO_AFRH_AFSEL11_Msk;
-    GPIOB->AFR[1] |= 0b1010 << GPIO_AFRH_AFSEL10_Pos;
-    GPIOB->AFR[1] |= 0b1010 << GPIO_AFRH_AFSEL11_Pos;
+    // GPIO ASSIGNMENTS MAY BE INCORRECT
+    /* OCTOSPIM_P1_CLK */
+    GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL3_Msk;
+    GPIOA->AFR[0] |= 0xA << GPIO_AFRL_AFSEL3_Pos;
+    GPIOA->MODER &= ~GPIO_MODER_MODE3_Msk;
+    GPIOA->MODER |= 0b10 << GPIO_MODER_MODE3_Pos;
+    GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED3_Msk;
+    GPIOA->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED3_Pos;
 
-    GPIOB->MODER &= ~GPIO_MODER_MODE10_Msk;
-    GPIOB->MODER &= ~GPIO_MODER_MODE11_Msk;
-    GPIOB->MODER |= 0b10 << GPIO_MODER_MODE10_Pos;
-    GPIOB->MODER |= 0b10 << GPIO_MODER_MODE11_Pos;
+    /* OCTOSPIM_P1_NCS */
+    GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL2_Msk; /* OCTOPIM_P1_NCS */
+    GPIOA->AFR[0] |= 0xA << GPIO_AFRL_AFSEL2_Pos;
+    GPIOA->MODER &= ~GPIO_MODER_MODE2_Msk;
+    GPIOA->MODER |= 0b10 << GPIO_MODER_MODE2_Pos;
+    GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED2_Msk;
+    GPIOA->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED2_Pos;
+    GPIOA->PUPDR |= 0b01 << GPIO_PUPDR_PUPD2_Pos; // you need a pullup
 
-    GPIOB->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED10_Msk;
-    GPIOB->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED11_Msk;
-    GPIOB->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED10_Pos;
-    GPIOB->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED11_Pos;
-
-    // gpio to pushpull
-    GPIOB->OTYPER &= ~GPIO_OTYPER_OT10_Msk;
-    GPIOB->OTYPER &= ~GPIO_OTYPER_OT11_Msk;
-    // no pull up/down
-    GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD10_Msk;
-    GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD11_Msk;
-
-    GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL6_Msk;
-    GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL7_Msk;
-    GPIOA->AFR[0] |= 0b1010 << GPIO_AFRL_AFSEL6_Pos;
-    GPIOA->AFR[0] |= 0b1010 << GPIO_AFRL_AFSEL7_Pos;
-
-    GPIOB->AFR[0] &= ~GPIO_AFRL_AFSEL0_Msk;
+    /* OCTOSPIM_P1_IO0 */
     GPIOB->AFR[0] &= ~GPIO_AFRL_AFSEL1_Msk;
-    GPIOB->AFR[0] |= 0b1010 << GPIO_AFRL_AFSEL0_Pos;
-    GPIOB->AFR[0] |= 0b1010 << GPIO_AFRL_AFSEL1_Pos;
-
-    GPIOA->MODER &= ~GPIO_MODER_MODE6_Msk;
-    GPIOA->MODER &= ~GPIO_MODER_MODE7_Msk;
-    GPIOA->MODER |= 0b10 << GPIO_MODER_MODE6_Pos;
-    GPIOA->MODER |= 0b10 << GPIO_MODER_MODE7_Pos;
-    GPIOB->MODER &= ~GPIO_MODER_MODE0_Msk;
+    GPIOB->AFR[0] |= 0xA << GPIO_AFRL_AFSEL1_Pos;
     GPIOB->MODER &= ~GPIO_MODER_MODE1_Msk;
-    GPIOB->MODER |= 0b10 << GPIO_MODER_MODE0_Pos;
     GPIOB->MODER |= 0b10 << GPIO_MODER_MODE1_Pos;
-
-    GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED6_Msk;
-    GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED7_Msk;
-    GPIOA->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED6_Pos;
-    GPIOA->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED7_Pos;
-    GPIOB->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED0_Msk;
     GPIOB->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED1_Msk;
-    GPIOB->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED0_Pos;
     GPIOB->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED1_Pos;
+    GPIOB->OTYPER &= ~GPIO_OTYPER_OT1_Msk;
+    GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD1_Msk;
 
-    // gpio to pushpull
-    GPIOA->OTYPER &= ~GPIO_OTYPER_OT6_Msk;
+    /* OCTOSPIM_P1_IO1 */
+    GPIOB->AFR[0] &= ~GPIO_AFRL_AFSEL0_Msk;
+    GPIOB->AFR[0] |= 0xA << GPIO_AFRL_AFSEL0_Pos;
+    GPIOB->MODER &= ~GPIO_MODER_MODE0_Msk;
+    GPIOB->MODER |= 0b10 << GPIO_MODER_MODE0_Pos;
+    GPIOB->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED0_Msk;
+    GPIOB->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED0_Pos;
+    GPIOB->OTYPER &= ~GPIO_OTYPER_OT0_Msk;
+    GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD0_Msk;
+
+    /* OCTOSPIM_P1_IO2 */
+    GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL7_Msk;
+    GPIOA->AFR[0] |= 0xA << GPIO_AFRL_AFSEL7_Pos;
+    GPIOA->MODER &= ~GPIO_MODER_MODE7_Msk;
+    GPIOA->MODER |= 0b10 << GPIO_MODER_MODE7_Pos;
+    GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED7_Msk;
+    GPIOA->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED7_Pos;
     GPIOA->OTYPER &= ~GPIO_OTYPER_OT7_Msk;
-    // no pull up/down
-    GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD6_Msk;
     GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD7_Msk;
-    // gpio to pushpull
-    GPIOB->OTYPER &= ~GPIO_OTYPER_OT0_Msk;
-    GPIOB->OTYPER &= ~GPIO_OTYPER_OT0_Msk;
-    // no pull up/down
-    GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD0_Msk;
-    GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD0_Msk;
+
+    /* OCTOSPIM_P1_IO3 */
+    GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL6_Msk;
+    GPIOA->AFR[0] |= 0xA << GPIO_AFRL_AFSEL6_Pos;
+    GPIOA->MODER &= ~GPIO_MODER_MODE6_Msk;
+    GPIOA->MODER |= 0b10 << GPIO_MODER_MODE6_Pos;
+    GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED6_Msk;
+    GPIOA->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED6_Pos;
+    GPIOA->OTYPER &= ~GPIO_OTYPER_OT6_Msk;
+    GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD6_Msk;
+
+    /* OCTOSPIM_P1_IO4 */
+    GPIOC->AFR[0] &= ~GPIO_AFRL_AFSEL1_Msk;
+    GPIOC->AFR[0] |= 0xA << GPIO_AFRL_AFSEL1_Pos;
+    GPIOC->MODER &= ~GPIO_MODER_MODE1_Msk;
+    GPIOC->MODER |= 0b10 << GPIO_MODER_MODE1_Pos;
+    GPIOC->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED1_Msk;
+    GPIOC->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED1_Pos;
+    GPIOC->OTYPER &= ~GPIO_OTYPER_OT1_Msk;
+    GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD1_Msk;
+
+    /* OCTOSPIM_P1_IO5 */
+    GPIOC->AFR[0] &= ~GPIO_AFRL_AFSEL2_Msk;
+    GPIOC->AFR[0] |= 0xA << GPIO_AFRL_AFSEL2_Pos;
+    GPIOC->MODER &= ~GPIO_MODER_MODE2_Msk;
+    GPIOC->MODER |= 0b10 << GPIO_MODER_MODE2_Pos;
+    GPIOC->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED2_Msk;
+    GPIOC->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED2_Pos;
+    GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD2_Msk;
+
+    /* OCTOSPIM_P1_IO6 */
+    GPIOC->AFR[0] &= ~GPIO_AFRL_AFSEL3_Msk;
+    GPIOC->AFR[0] |= 0xA << GPIO_AFRL_AFSEL3_Pos;
+    GPIOC->MODER &= ~GPIO_MODER_MODE3_Msk;
+    GPIOC->MODER |= 0b10 << GPIO_MODER_MODE3_Pos;
+    GPIOC->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED3_Msk;
+    GPIOC->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED3_Pos;
+    GPIOC->OTYPER &= ~GPIO_OTYPER_OT3_Msk;
+    GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD3_Msk;
+
+    /* OCTOSPIM_P1_IO7 */
+    GPIOC->AFR[0] &= ~GPIO_AFRL_AFSEL4_Msk;
+    GPIOC->AFR[0] |= 0xA << GPIO_AFRL_AFSEL4_Pos;
+    GPIOC->MODER &= ~GPIO_MODER_MODE4_Msk;
+    GPIOC->MODER |= 0b10 << GPIO_MODER_MODE4_Pos;
+    GPIOC->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED4_Msk;
+    GPIOC->OSPEEDR |= 0b11 << GPIO_OSPEEDR_OSPEED4_Pos;
+    GPIOC->OTYPER &= ~GPIO_OTYPER_OT4_Msk;
+    GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD4_Msk;
   }
   if (device.interface_select == 0x02) {
     // enable clock for the gpio banks
@@ -204,9 +237,13 @@ void mspi_gpio_cfg(struct mspi_interface device) {
 }
 
 void mspi_sys_cfg(struct mspi_interface device) {
+  /* Enable the Octa-SPI interface clock */
+  RCC->AHB3ENR |= RCC_AHB3ENR_OSPI2EN;
+  /* Enable the Octa-SPI interface clock */
+  RCC->AHB3ENR |= RCC_AHB3ENR_OSPI1EN;
+
   if (device.interface_select == 0x01) {
-    /* Enable the Octa-SPI interface clock */
-    RCC->AHB3ENR |= RCC_AHB3ENR_OSPI1EN;
+
     /* Reset Octa-SPI peripheral */
     RCC->AHB3RSTR |= (RCC_AHB3RSTR_OSPI1RST);  /* Reset */
     RCC->AHB3RSTR &= ~(RCC_AHB3RSTR_OSPI1RST); /* Release reset */
@@ -214,25 +251,28 @@ void mspi_sys_cfg(struct mspi_interface device) {
     OCTOSPI1->CR |= OCTOSPI_CR_DMAEN;
   }
   if (device.interface_select == 0x02) {
-    /* Enable the Octa-SPI interface clock */
-    RCC->AHB3ENR |= RCC_AHB3ENR_OSPI2EN;
+
     /* Reset Octa-SPI peripheral */
     RCC->AHB3RSTR |= (RCC_AHB3RSTR_OSPI2RST);  /* Reset */
     RCC->AHB3RSTR &= ~(RCC_AHB3RSTR_OSPI2RST); /* Release reset */
     /* Enable Octa-SPI DMA */
     OCTOSPI2->CR |= OCTOSPI_CR_DMAEN;
   }
+  /* Enable Octa-SPI Muliplexer */
+  RCC->AHB2ENR |= RCC_AHB2ENR_OSPIMEN;
+  OCTOSPIM->PCR[0] |= OCTOSPIM_PCR_CLKEN;
+  OCTOSPIM->PCR[1] |= OCTOSPIM_PCR_CLKEN;
 }
 
 // initialization method
 void mspi_dev_cfg(struct mspi_interface device) {
   if (device.interface_select == 0x01) {
-    OCTOSPI1->DCR1 |= 27 << OCTOSPI_DCR1_DEVSIZE_Pos;
-    OCTOSPI1->DCR2 |= 16 << OCTOSPI_DCR2_PRESCALER_Pos;
+    OCTOSPI1->DCR1 |= 27 << OCTOSPI_DCR1_DEVSIZE_Pos; // 27
+    OCTOSPI1->DCR2 |= 4 << OCTOSPI_DCR2_PRESCALER_Pos;
   }
   if (device.interface_select == 0x02) {
-    OCTOSPI2->DCR1 |= 27 << OCTOSPI_DCR1_DEVSIZE_Pos;
-    OCTOSPI2->DCR2 |= 16 << OCTOSPI_DCR2_PRESCALER_Pos;
+    OCTOSPI2->DCR1 |= 27 << OCTOSPI_DCR1_DEVSIZE_Pos; // 27
+    OCTOSPI2->DCR2 |= 4 << OCTOSPI_DCR2_PRESCALER_Pos;
   }
 }
 
@@ -240,9 +280,13 @@ void mspi_interface_cleanup(struct mspi_interface device) {
   if (device.interface_select == 0x01) {
     // cleanup of functional registers
     OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
-    OCTOSPI1->CCR &=
-        ~(OCTOSPI_CR_FMODE | OCTOSPI_CCR_IMODE | OCTOSPI_CCR_ADMODE |
-          OCTOSPI_CCR_DMODE | OCTOSPI_CCR_ADSIZE | OCTOSPI_IR_INSTRUCTION);
+
+    OCTOSPI1->CCR &= ~(OCTOSPI_CR_FMODE);
+    OCTOSPI1->CCR &= ~(OCTOSPI_CCR_IMODE);
+    OCTOSPI1->CCR &= ~(OCTOSPI_CCR_ADMODE);
+    OCTOSPI1->CCR &= ~(OCTOSPI_CCR_DMODE);
+    OCTOSPI1->CCR &= ~(OCTOSPI_CCR_ADSIZE);
+    OCTOSPI1->CCR &= ~(OCTOSPI_IR_INSTRUCTION);
 
     OCTOSPI1->DLR &= ~(OCTOSPI_DLR_DL);
     OCTOSPI1->AR &= ~(OCTOSPI_AR_ADDRESS_Msk);
@@ -262,6 +306,7 @@ void mspi_interface_cleanup(struct mspi_interface device) {
   if (device.interface_select == 0x02) {
     // cleanup of functional registers
     OCTOSPI2->CR &= ~(OCTOSPI_CR_EN);
+
     OCTOSPI2->CCR &= ~(OCTOSPI_CR_FMODE);
     OCTOSPI2->CCR &= ~(OCTOSPI_CCR_IMODE);
     OCTOSPI2->CCR &= ~(OCTOSPI_CCR_ADMODE);
@@ -317,6 +362,7 @@ u16 mspi_transfer(
     if (cmd.data_mode > 0) {
       OCTOSPI1->DLR |= (cmd.data_size << OCTOSPI_DLR_DL_Pos);
     }
+
     /* overrides for auto-polling mode*/
     // Set the 'mask', 'match', and 'polling interval' values.
     // TEST: check if creates issues when not in autopoll mode
@@ -326,6 +372,10 @@ u16 mspi_transfer(
 
     // Enable the peripheral
     OCTOSPI1->CR |= (OCTOSPI_CR_EN);
+
+    // TODO: REMOVE
+    // TEST: Free running clock
+    // OCTOSPI1->DCR1 |= OCTOSPI_DCR1_FRCK;
 
     // Set intruction
     OCTOSPI1->CCR |= (cmd.instr_cmd << OCTOSPI_IR_INSTRUCTION_Pos);
