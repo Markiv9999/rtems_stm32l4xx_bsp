@@ -279,7 +279,7 @@ struct mspi_cmd mspi_device_wait_write_enable(void *nand_addr) {
 
   cmd.data_mode = SINGLE;
   cmd.data_size = _8_bit;
-  cmd.data_cmd_embedded = 0x1;
+  cmd.data_cmd_embedded = 0x0;
 
   cmd.autopoll_mask = WEL_MASK;
   cmd.autopoll_match = WEL_MATCH;
