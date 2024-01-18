@@ -145,6 +145,24 @@ struct mspi_cmd mspi_device_get_status(void *placeholder) {
   return cmd;
 }
 
+struct mspi_cmd mspi_device_get_id(void *placeholder) {
+  struct mspi_cmd cmd = {0};
+  cmd.is_double_mem = IS_DUAL_MEM;
+  cmd.fun_mode = READ;
+
+  cmd.instr_mode = SINGLE;
+  cmd.instr_cmd = 0x0F;
+
+  cmd.addr_mode = SINGLE;
+  cmd.addr_size = _8_bit;
+  cmd.addr_cmd = 0xC0;
+
+  cmd.data_mode = SINGLE;
+  cmd.data_size = _8_bit;
+
+  return cmd;
+}
+
 struct mspi_cmd mspi_device_page_read_from_nand(void *nand_addr) {
   struct mspi_cmd cmd = {0};
   cmd.is_double_mem = IS_DUAL_MEM;
