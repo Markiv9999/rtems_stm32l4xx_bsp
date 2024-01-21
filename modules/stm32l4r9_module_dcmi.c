@@ -271,7 +271,6 @@ void ov5640_configure_jpeg_qsxga(void) {
 void dcmi_cfg_dmach(u32 *);
 void dcmi_cfg_dmamux(void);
 
-// #define MAX_DMA_TRS_SIZE 655336 // XXX: too much to keep in ram ...
 // #define MAX_DMA_TRS_SIZE 230400 //XXX: still too much to keep in ram
 /*
  * a 720p image is 1280x720=921600
@@ -279,7 +278,7 @@ void dcmi_cfg_dmamux(void);
  * 921600/4=230400 BW
  */
 
-#define MAX_DMA_TRS_SIZE 115200
+#define MAX_DMA_TRS_SIZE 65535
 // XXX: this works, but it is half of a raw image
 static uint32_t dcmi_dma_buffer[MAX_DMA_TRS_SIZE];
 
@@ -356,9 +355,10 @@ void dcmi_cfg_dmamux(void) {
   RCC->AHB1ENR |= RCC_AHB1ENR_DMAMUX1EN;
 
   /* connects dcmi request to a specific dma multiplexer channel */
-  DMAMUX1_Channel3->CCR |= DMAMUX_DCMI_REQUEST_CODE;
+  DMAMUX1_Channel2->CCR |= DMAMUX_DCMI_REQUEST_CODE;
   /* syncronization identification */
-  DMAMUX1_Channel3->CCR |= 3 << 24; // SYNC_ID [28:24]
+  // DMAMUX1_Channel2->CCR |= 3 << 24; // SYNC_ID [28:24]
+  // XXX: not sure if this is needed, or what it does..
 }
 
 void dcmi_cfg_periph(void) {
@@ -368,6 +368,11 @@ void dcmi_cfg_periph(void) {
    * clocks the dcmi peripheral
    * */
   RCC->AHB2ENR |= RCC_AHB2ENR_DCMIEN;
+  /*
+   * resets the dcmi peripheral
+   * */
+  RCC->AHB2RSTR |= RCC_AHB2RSTR_DCMIRST;
+  RCC->AHB2RSTR &= ~(RCC_AHB2RSTR_DCMIRST);
 
   /*
    * Configure the DCMI gpios
@@ -466,12 +471,14 @@ void dcmi_cfg_periph(void) {
 
   /* Vsync polarity -> active low */
   // keep reset (0)
+  // DCMI->CR |= DCMI_CR_VSPOL;
+  // XXX: typically removed
 
   /* Hsync polarity -> active low */
   // keep reset (0)
-
-  /* PCLK polarity -> active high */
-  // keep reset (0) //XXX: possible issue
+  DCMI->CR |= DCMI_CR_HSPOL;
+  // XXX: in theory it should be low, but when set to active
+  // high I started having overrun interrupts
 
   /* PCLK polarity -> active high(rising) */
   DCMI->CR |= DCMI_CR_PCKPOL;
