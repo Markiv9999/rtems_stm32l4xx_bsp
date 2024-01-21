@@ -388,12 +388,7 @@ u16 mspi_transfer(
 
     // Set intruction
     OCTOSPI1->IR |= (cmd.instr_cmd << OCTOSPI_IR_INSTRUCTION_Pos);
-    // Set the address
-    /*
-    for (int i = 0; i < 1000; i++) {
-      asm("nop");
-    }
-    */
+
     if (cmd.addr_mode > 0) {
       OCTOSPI1->AR |= (cmd.addr_cmd << OCTOSPI_AR_ADDRESS_Pos);
     }

@@ -1,4 +1,5 @@
 #include "stm32l4r9_module_dcmi.h"
+#include "stm32l4r9xx.h"
 // 13.1.4.2 Jpg mode capture
 //
 void write_i2c(u8, u8, u8);
@@ -265,4 +266,137 @@ void ov5640_configure_jpeg_qsxga(void) {
   write_i2c(0x3a, 0x1f, 0x14);
   write_i2c(0x30, 0x08, 0x02);
   write_i2c(0x30, 0x35, 0x21);
+}
+
+void dcmi_cfg_dmach(u32 *);
+void dcmi_cfg_dmamux(void);
+
+// #define MAX_DMA_TRS_SIZE 655336 // XXX: too much to keep in ram ...
+// #define MAX_DMA_TRS_SIZE 230400 //XXX: still too much to keep in ram
+/*
+ * a 720p image is 1280x720=921600
+ * Basically a megabyte.. let's see if i can allocate it
+ * 921600/4=230400 BW
+ */
+
+#define MAX_DMA_TRS_SIZE 115200
+// XXX: this works, but it is half of a raw image
+
+void dcmi_cfg_transfer(void) {
+  /*
+   * The maximum transfer size is 2^16-1 = 655336 transfers
+   * where each transder is a WORD if configured so,
+   * (each transfer is the data entity configured)
+   *
+   */
+
+  /* initialize and dirrty the target buffer
+   */
+  extern uint32_t dcmi_dma_buffer[MAX_DMA_TRS_SIZE];
+  for (uint32_t i = 0; i < MAX_DMA_TRS_SIZE; i++) {
+    dcmi_dma_buffer[i] = 0xBEEFFEED;
+  }
+
+  /* Configure the DCMI pull dma channel;
+   *  DMA controller: 1
+   *  DMA channel:3
+   * */
+  dcmi_cfg_dmach(dcmi_dma_buffer);
+
+  /* Configure DMAMUX */
+  dcmi_cfg_dmamux();
+
+  /* Enable the dma channel */
+  DMA1_Channel3->CCR |= DMA_CCR_EN;
+  while (1) {
+  }
+}
+
+void dcmi_cfg_dmach(uint32_t *data_ptr) {
+  /*
+   * note: probably since the data to be transfered is of variable size
+   * due to the jpeg compression,
+   * the transfer will probably not complete after a frame and the
+   * transfer complete flag will not be asserted
+   */
+
+  /* TODO: you can macro the DMA1_Channel3 name,
+   * to a name that is functional and can be contained
+   * with the others in a configuration file
+   */
+
+  /* Enable the dma controller 1 peripheral */
+  RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+
+  /* Clear interrupt status flags */
+  DMA1->IFCR |= DMA_IFCR_CGIF3;
+
+  /* Set the peripheral register address in the DMA_CPARx register */
+  DMA1_Channel3->CPAR = DCMI_BASE + 0x28; // dcmi data register
+
+  DMA1_Channel3->CMAR = (uint32_t)data_ptr;
+  /* Configure the total number of data transfers in the DMA_CNDTRx register */
+  DMA1_Channel3->CNDTR = MAX_DMA_TRS_SIZE;
+  /* Configure the CCR register */
+  DMA1_Channel3->CCR |=
+      /* channel priority */
+      0b00 << DMA_CCR_PL_Pos |
+      /* memory size (32bit)*/
+      0b11 << DMA_CCR_MSIZE_Pos |
+      /* peripheral size (32bit)*/
+      0b11 << DMA_CCR_PSIZE_Pos |
+      /* memory increment mode */
+      DMA_CCR_MINC;
+  /* DIR control register is 0, read from peripheral */
+  /* Set up DMA1_CH1 "Push" dma channel */
+}
+
+#define DMAMUX_DCMI_REQUEST_CODE 90
+void dcmi_cfg_dmamux(void) {
+  /*Enable DMAMUX clock */
+
+  RCC->AHB1ENR |= RCC_AHB1ENR_DMAMUX1EN;
+
+  /* connects dcmi request to a specific dma multiplexer channel */
+  DMAMUX1_Channel3->CCR |= DMAMUX_DCMI_REQUEST_CODE;
+  /* syncronization identification */
+  DMAMUX1_Channel3->CCR |= 3 << 24; // SYNC_ID [28:24]
+}
+
+void dcmi_cfg_periph(void) {
+  // XXX: since it is jpeg, how many data lines are being used by the sensor in
+  // the 720p configuration? The peripheral needs to be configured accordingly
+  /*
+   * clocks the dcmi peripheral
+   * */
+  RCC->AHB2ENR |= RCC_AHB2ENR_DCMIEN;
+
+  /*
+   * configures the dcmi peripheral
+   * */
+
+  /* Vsync polarity -> active low */
+  // keep reset (0)
+
+  /* Hsync polarity -> active low */
+  // keep reset (0)
+
+  /* PCLK polarity -> active high */
+  // keep reset (0) //XXX: possible issue
+
+  /* PCLK polarity -> active high(rising) */
+  DCMI->CR |= DCMI_CR_PCKPOL;
+
+  /* JPEG format -> enabled */
+  DCMI->CR |= DCMI_CR_JPEG;
+
+  /* Capture mode -> snapshot */
+  DCMI->CR |= DCMI_CR_CM;
+
+  /* Capture enable */
+  // XXX: Check if needs to be enabled before or after peripheral enable
+  DCMI->CR |= DCMI_CR_CAPTURE;
+
+  /* enable interface */
+  DCMI->CR |= DCMI_CR_ENABLE;
 }
