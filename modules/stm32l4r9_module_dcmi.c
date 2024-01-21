@@ -281,6 +281,7 @@ void dcmi_cfg_dmamux(void);
 
 #define MAX_DMA_TRS_SIZE 115200
 // XXX: this works, but it is half of a raw image
+static uint32_t dcmi_dma_buffer[MAX_DMA_TRS_SIZE];
 
 void dcmi_cfg_transfer(void) {
   /*
@@ -292,7 +293,6 @@ void dcmi_cfg_transfer(void) {
 
   /* initialize and dirrty the target buffer
    */
-  extern uint32_t dcmi_dma_buffer[MAX_DMA_TRS_SIZE];
   for (uint32_t i = 0; i < MAX_DMA_TRS_SIZE; i++) {
     dcmi_dma_buffer[i] = 0xBEEFFEED;
   }
@@ -308,8 +308,6 @@ void dcmi_cfg_transfer(void) {
 
   /* Enable the dma channel */
   DMA1_Channel3->CCR |= DMA_CCR_EN;
-  while (1) {
-  }
 }
 
 void dcmi_cfg_dmach(uint32_t *data_ptr) {
@@ -370,6 +368,97 @@ void dcmi_cfg_periph(void) {
    * clocks the dcmi peripheral
    * */
   RCC->AHB2ENR |= RCC_AHB2ENR_DCMIEN;
+
+  /*
+   * Configure the DCMI gpios
+   * */
+  // enable clock for the gpio banks
+  RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
+  RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
+  RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
+  RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN;
+  RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN;
+
+#define DCMI_H_AF 0x0A
+#define DCMI_L_AF 0x04
+
+  /* PA4 - DMCI_HSYNC */
+  GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL4_Msk;
+  GPIOA->AFR[0] |= DCMI_H_AF << GPIO_AFRL_AFSEL4_Pos;
+  GPIOA->MODER &= ~GPIO_MODER_MODE4_Msk;
+  GPIOA->MODER |= 0b10 << GPIO_MODER_MODE4_Pos;
+
+  /* PD9 - DMCI_PXCLK */
+  GPIOD->AFR[1] &= ~GPIO_AFRH_AFSEL9_Msk;
+  GPIOD->AFR[1] |= DCMI_H_AF << GPIO_AFRH_AFSEL9_Pos;
+  GPIOD->MODER &= ~GPIO_MODER_MODE9_Msk;
+  GPIOD->MODER |= 0b10 << GPIO_MODER_MODE9_Pos;
+
+  /* PB7 - DMCI_VSYNC */
+  GPIOB->AFR[0] &= ~GPIO_AFRL_AFSEL7_Msk;
+  GPIOB->AFR[0] |= DCMI_H_AF << GPIO_AFRL_AFSEL7_Pos;
+  GPIOB->MODER &= ~GPIO_MODER_MODE7_Msk;
+  GPIOB->MODER |= 0b10 << GPIO_MODER_MODE7_Pos;
+
+  /* PC6 - DMCI_D0 */
+  GPIOC->AFR[0] &= ~GPIO_AFRL_AFSEL6_Msk;
+  GPIOC->AFR[0] |= DCMI_H_AF << GPIO_AFRL_AFSEL6_Pos;
+  GPIOC->MODER &= ~GPIO_MODER_MODE6_Msk;
+  GPIOC->MODER |= 0b10 << GPIO_MODER_MODE6_Pos;
+
+  /* PC7 - DMCI_D1 */
+  GPIOC->AFR[0] &= ~GPIO_AFRL_AFSEL7_Msk;
+  GPIOC->AFR[0] |= DCMI_H_AF << GPIO_AFRL_AFSEL7_Pos;
+  GPIOC->MODER &= ~GPIO_MODER_MODE7_Msk;
+  GPIOC->MODER |= 0b10 << GPIO_MODER_MODE7_Pos;
+
+  /* PC8 - DMCI_D2 */
+  GPIOC->AFR[1] &= ~GPIO_AFRH_AFSEL8_Msk;
+  GPIOC->AFR[1] |= DCMI_H_AF << GPIO_AFRH_AFSEL8_Pos;
+  GPIOC->MODER &= ~GPIO_MODER_MODE8_Msk;
+  GPIOC->MODER |= 0b10 << GPIO_MODER_MODE8_Pos;
+
+  /* PC9 - DMCI_D3 */
+  GPIOC->AFR[1] &= ~GPIO_AFRH_AFSEL9_Msk;
+  GPIOC->AFR[1] |= DCMI_L_AF << GPIO_AFRH_AFSEL9_Pos;
+  GPIOC->MODER &= ~GPIO_MODER_MODE9_Msk;
+  GPIOC->MODER |= 0b10 << GPIO_MODER_MODE9_Pos;
+
+  /* PC10 - DMCI_D8 */
+  GPIOC->AFR[1] &= ~GPIO_AFRH_AFSEL10_Msk;
+  GPIOC->AFR[1] |= DCMI_H_AF << GPIO_AFRH_AFSEL10_Pos;
+  GPIOC->MODER &= ~GPIO_MODER_MODE10_Msk;
+  GPIOC->MODER |= 0b10 << GPIO_MODER_MODE10_Pos;
+
+  /* PC12 - DMCI_D9 */
+  GPIOC->AFR[1] &= ~GPIO_AFRH_AFSEL12_Msk;
+  GPIOC->AFR[1] |= DCMI_H_AF << GPIO_AFRH_AFSEL12_Pos;
+  GPIOC->MODER &= ~GPIO_MODER_MODE12_Msk;
+  GPIOC->MODER |= 0b10 << GPIO_MODER_MODE12_Pos;
+
+  /* PD3 - DMCI_D5 */
+  GPIOD->AFR[0] &= ~GPIO_AFRL_AFSEL3_Msk;
+  GPIOD->AFR[0] |= DCMI_L_AF << GPIO_AFRL_AFSEL3_Pos;
+  GPIOD->MODER &= ~GPIO_MODER_MODE3_Msk;
+  GPIOD->MODER |= 0b10 << GPIO_MODER_MODE3_Pos;
+
+  /* PE4 - DMCI_D4 */
+  GPIOE->AFR[0] &= ~GPIO_AFRL_AFSEL4_Msk;
+  GPIOE->AFR[0] |= DCMI_H_AF << GPIO_AFRL_AFSEL4_Pos;
+  GPIOE->MODER &= ~GPIO_MODER_MODE4_Msk;
+  GPIOE->MODER |= 0b10 << GPIO_MODER_MODE4_Pos;
+
+  /* PE5 - DMCI_D6 */
+  GPIOE->AFR[0] &= ~GPIO_AFRL_AFSEL5_Msk;
+  GPIOE->AFR[0] |= DCMI_H_AF << GPIO_AFRL_AFSEL5_Pos;
+  GPIOE->MODER &= ~GPIO_MODER_MODE5_Msk;
+  GPIOE->MODER |= 0b10 << GPIO_MODER_MODE5_Pos;
+
+  /* PE6 - DMCI_D7 */
+  GPIOE->AFR[0] &= ~GPIO_AFRL_AFSEL6_Msk;
+  GPIOE->AFR[0] |= DCMI_H_AF << GPIO_AFRL_AFSEL6_Pos;
+  GPIOE->MODER &= ~GPIO_MODER_MODE6_Msk;
+  GPIOE->MODER |= 0b10 << GPIO_MODER_MODE6_Pos;
 
   /*
    * configures the dcmi peripheral
