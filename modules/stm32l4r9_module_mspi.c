@@ -405,10 +405,6 @@ u16 mspi_transfer(
             // manually set data register content
             for (uint32_t i = 0; i < ((cmd.data_size >> 2) + 1); i++) {
               OCTOSPI1->DR |= *(device_context.data_ptr + i);
-              while ((OCTOSPI1->SR & OCTOSPI_SR_FTF) == 0) {
-                /*wait while FTF flag is zero */
-              };
-              // XXX: Could be superfluous
             }
           }
         }
