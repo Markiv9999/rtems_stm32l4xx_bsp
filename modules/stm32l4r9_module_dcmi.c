@@ -471,14 +471,11 @@ void dcmi_cfg_periph(void) {
 
   /* Vsync polarity -> active low */
   // keep reset (0)
-  // DCMI->CR |= DCMI_CR_VSPOL;
+  DCMI->CR |= DCMI_CR_VSPOL;
   // XXX: typically removed
 
-  /* Hsync polarity -> active low */
-  // keep reset (0)
-  DCMI->CR |= DCMI_CR_HSPOL;
-  // XXX: in theory it should be low, but when set to active
-  // high I started having overrun interrupts
+  /* Hsync polarity -> active high */
+  // DCMI->CR |= DCMI_CR_HSPOL;
 
   /* PCLK polarity -> active high(rising) */
   DCMI->CR |= DCMI_CR_PCKPOL;
