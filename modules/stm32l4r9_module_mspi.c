@@ -394,8 +394,6 @@ u16 mspi_transfer(
       OCTOSPI1->AR |= (cmd.addr_cmd << OCTOSPI_AR_ADDRESS_Pos);
     }
     if (cmd.data_mode) { // write -- dma push / indirect
-      volatile uint8_t testvar1 = cmd.data_cmd_embedded;
-      volatile uint32_t testvar2 = cmd.fun_mode;
       // creates deadbee
       if (cmd.data_cmd_embedded == 0) {
         if (cmd.fun_mode == 0b00) {
@@ -405,11 +403,12 @@ u16 mspi_transfer(
             // device_context.size_tr);
           } else {
             // manually set data register content
-            static volatile uint32_t testval = {0};
-            for (uint32_t i = 0; i < (device_context.size_tr >> 2); i++) {
-              testval = (u32) * (device_context.data_ptr + i);
-              OCTOSPI1->DR |= testval;
-              // TODO: add some kind of fifo check
+            for (uint32_t i = 0; i < ((cmd.data_size >> 2) + 1); i++) {
+              OCTOSPI1->DR |= *(device_context.data_ptr + i);
+              while ((OCTOSPI1->SR & OCTOSPI_SR_FTF) == 0) {
+                /*wait while FTF flag is zero */
+              };
+              // XXX: Could be superfluous
             }
           }
         }
@@ -421,19 +420,16 @@ u16 mspi_transfer(
 
       if (cmd.fun_mode == 0b01) { // read -- only indirect mode
         if (OCTOSPI1->SR & OCTOSPI_SR_FTF_Msk)
-          for (uint32_t i = 0; i < (device_context.size_tr >> 2); i++) {
+          for (uint32_t i = 0; i < (cmd.data_size + 1); i++) {
             *(device_context.data_ptr + i) = OCTOSPI1->DR;
-            // TODO: add some kind of fifo check
           }
       }
     }
     // wait for the transaction to complete (+ timeout and abort)
-    /*
     if (mspi_interface_wait_busy(device_context)) {
       OCTOSPI1->CR &= ~(OCTOSPI_CR_EN); // disable the interface in anay case
       return ERROR_MSPI_INTERFACE_STUCK;
     }
-    */
 
     // Acknowledge the 'status match flag.'
     OCTOSPI1->FCR |= (OCTOSPI_FCR_CSMF);
@@ -484,11 +480,14 @@ u16 mspi_transfer(
           // device_context.size_tr);
         } else {
           // manually set data register content
-          static volatile uint32_t testval = {0};
-          for (uint32_t i = 0; i < (device_context.size_tr >> 2); i++) {
-            testval = (u32) * (device_context.data_ptr + i);
-            OCTOSPI2->DR |= testval;
+          // static volatile uint32_t testval = {0};
+          for (uint32_t i = 0; i < (cmd.data_size >> 2); i++) {
+            // NOTE: works with words transfers
+            // testval = (u32) * (device_context.data_ptr + i);
+            // XXX: the cast was superfluous
+            OCTOSPI2->DR |= *(device_context.data_ptr + i);
             // TODO: add some kind of fifo check
+            // XXX: maybe ad a bit of spin
           }
         }
       }
@@ -505,13 +504,13 @@ u16 mspi_transfer(
           }
       }
     }
-    // wait for the transaction to complete (+ timeout and abort)
-    /*
+    // wait for the transaction to complete for autopoll case
+    // to implement: timeout and abort
+    //
     if (mspi_interface_wait_busy(device_context)) {
       OCTOSPI2->CR &= ~(OCTOSPI_CR_EN); // disable the interface in anay case
       return ERROR_MSPI_INTERFACE_STUCK;
     }
-    */
 
     // Acknowledge the 'status match flag.'
     OCTOSPI2->FCR |= (OCTOSPI_FCR_CSMF);
