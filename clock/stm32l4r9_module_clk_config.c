@@ -7,8 +7,7 @@ void enable_debug_clock(void) {
   RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
 
   RCC->CFGR |= 0b0101 << RCC_CFGR_MCOSEL_Pos; // PLL
-  // RCC->CFGR |= 0b0010 << RCC_CFGR_MCOPRE_Pos; // div 4
-  RCC->CFGR |= 0b0011 << RCC_CFGR_MCOPRE_Pos;
+  RCC->CFGR |= 0b0010 << RCC_CFGR_MCOPRE_Pos; // div 4
 
   GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED8_Msk;
   GPIOA->OSPEEDR |= 0b10 << GPIO_OSPEEDR_OSPEED8_Pos;

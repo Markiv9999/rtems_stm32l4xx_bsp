@@ -23,7 +23,8 @@ int mspi_init(struct mspi_interface device) {
    * the alternate function */
   mspi_gpio_cfg(device);
   /* Enables the multi-spi clock, enables the multispi-dma */
-  mspi_sys_cfg(device);
+  mspi_sys_cfg(device); // XXX: interface triggered once here(due to reset)
+
   /* Configure device specific mspi settings, like clock prescaler, device size
    */
   mspi_dev_cfg(device);
@@ -282,12 +283,12 @@ void mspi_dev_cfg(struct mspi_interface device) {
   if (device.interface_select == 0x01) {
     OCTOSPI1->DCR1 |= 27 << OCTOSPI_DCR1_DEVSIZE_Pos; // 27
     OCTOSPI1->DCR2 &= ~(OCTOSPI_DCR2_PRESCALER_Msk);
-    OCTOSPI1->DCR2 |= 16 << OCTOSPI_DCR2_PRESCALER_Pos;
+    OCTOSPI1->DCR2 |= 0 << OCTOSPI_DCR2_PRESCALER_Pos;
   }
   if (device.interface_select == 0x02) {
     OCTOSPI2->DCR1 |= 27 << OCTOSPI_DCR1_DEVSIZE_Pos; // 27
     OCTOSPI2->DCR2 &= ~(OCTOSPI_DCR2_PRESCALER_Msk);
-    OCTOSPI2->DCR2 |= 16 << OCTOSPI_DCR2_PRESCALER_Pos;
+    OCTOSPI2->DCR2 |= 0 << OCTOSPI_DCR2_PRESCALER_Pos;
   }
 }
 
@@ -301,7 +302,7 @@ void mspi_interface_cleanup(struct mspi_interface device) {
     OCTOSPI1->CCR &= ~(OCTOSPI_CCR_ADMODE);
     OCTOSPI1->CCR &= ~(OCTOSPI_CCR_DMODE);
     OCTOSPI1->CCR &= ~(OCTOSPI_CCR_ADSIZE);
-    OCTOSPI1->CCR &= ~(OCTOSPI_IR_INSTRUCTION);
+    OCTOSPI1->IR &= ~(OCTOSPI_IR_INSTRUCTION);
 
     OCTOSPI1->DLR &= ~(OCTOSPI_DLR_DL);
     OCTOSPI1->AR &= ~(OCTOSPI_AR_ADDRESS_Msk);
@@ -327,7 +328,7 @@ void mspi_interface_cleanup(struct mspi_interface device) {
     OCTOSPI2->CCR &= ~(OCTOSPI_CCR_ADMODE);
     OCTOSPI2->CCR &= ~(OCTOSPI_CCR_DMODE);
     OCTOSPI2->CCR &= ~(OCTOSPI_CCR_ADSIZE);
-    OCTOSPI2->CCR &= ~(OCTOSPI_IR_INSTRUCTION);
+    OCTOSPI2->IR &= ~(OCTOSPI_IR_INSTRUCTION);
 
     OCTOSPI2->DLR &= ~(OCTOSPI_DLR_DL);
     OCTOSPI2->AR &= ~(OCTOSPI_AR_ADDRESS_Msk);
