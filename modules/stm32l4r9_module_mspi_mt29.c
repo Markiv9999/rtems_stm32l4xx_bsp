@@ -21,7 +21,7 @@ struct mspi_cmd mspi_device_page_program(void *);
 struct mspi_cmd mspi_device_block_erase(void *);
 
 struct mspi_cmd mspi_device_wait_write_enable(void *);
-// struct mspi_cmd mspi_device_wait_program_complete(void);
+struct mspi_cmd mspi_device_wait_oip(void *);
 /**
  * --------------------------------------------------------------------------- *
  *       ADDRESS MANAGEMENT LOCAL FUNCTIONS
@@ -31,19 +31,21 @@ struct mspi_cmd mspi_device_wait_write_enable(void *);
 u32 RA_gen(struct nand_addr nand_addr) {
   u32 RA = {0};
   /*
+  // OLD
   RA |= (nand_addr.block << 17);
   RA |= (nand_addr.page << 11);
   RA >>= 8;
   */
-  RA |= (nand_addr.block << 5);
-  RA |= (nand_addr.page);
+  // NEW
+  RA |= ((nand_addr.block & 0x7FF) << 6);
+  RA |= (nand_addr.page & 0x3F);
   return RA;
 }
 
 u32 CA_gen(struct nand_addr nand_addr) {
   u32 CA = {0};
-  // CA |= ((nand_addr.block & 0x01) << 12);
-  CA |= (nand_addr.column);
+  // CA |= ((nand_addr.block & 0x01) << 12); // OLD
+  CA |= (nand_addr.column); // NEW
   return CA;
 }
 
@@ -193,6 +195,8 @@ struct mspi_cmd mspi_device_page_read_from_cache_SINGLE(void *nand_addr) {
   cmd.addr_size = _16_bit;
   cmd.addr_cmd = CA_gen(*(struct nand_addr *)nand_addr);
 
+  cmd.dummy_size = 0x8;
+
   cmd.data_mode = SINGLE;
   cmd.data_size = MT29_PAGE_SIZE - 1;
 
@@ -205,11 +209,13 @@ struct mspi_cmd mspi_device_page_read_from_cache_QUAD(void *nand_addr) {
   cmd.fun_mode = READ;
 
   cmd.instr_mode = SINGLE;
-  cmd.instr_cmd = 0xEB;
+  cmd.instr_cmd = 0x6B;
 
-  cmd.addr_mode = QUAD;
+  cmd.addr_mode = SINGLE;
   cmd.addr_size = _16_bit;
   cmd.addr_cmd = CA_gen(*(struct nand_addr *)nand_addr);
+
+  cmd.dummy_size = 0x8;
 
   cmd.data_mode = QUAD;
   cmd.data_size = MT29_PAGE_SIZE - 1;
@@ -305,6 +311,28 @@ struct mspi_cmd mspi_device_wait_write_enable(void *nand_addr) {
   return cmd;
 }
 
+struct mspi_cmd mspi_device_wait_oip(void *nand_addr) {
+  struct mspi_cmd cmd = {0};
+  cmd.is_double_mem = IS_DUAL_MEM;
+  cmd.fun_mode = AUTOPOLLING;
+
+  cmd.instr_mode = SINGLE;
+  cmd.instr_cmd = 0x0F;
+
+  cmd.addr_mode = SINGLE;
+  cmd.addr_size = _8_bit;
+  cmd.addr_cmd = 0xC0;
+
+  cmd.data_mode = SINGLE;
+  cmd.data_size = _8_bit;
+  cmd.data_cmd_embedded = 0x0;
+
+  cmd.autopoll_mask = OIP_MASK;
+  cmd.autopoll_match = OIP_MATCH;
+
+  return cmd;
+}
+
 /**
  * --------------------------------------------------------------------------- *
  *       DEVICE OBJECT CONSTRUCTOR
@@ -317,6 +345,7 @@ struct mspi_device mspi_device_constr(void) {
   dev.write_lock = &mspi_device_write_lock;
   dev.write_enable = &mspi_device_write_enable;
   dev.write_enable_polled = &mspi_device_wait_write_enable;
+  dev.wait_oip = &mspi_device_wait_oip;
   dev.get_status = &mspi_device_get_status;
   dev.page_read_from_nand = &mspi_device_page_read_from_nand;
   dev.page_read_from_cache_SINGLE = &mspi_device_page_read_from_cache_SINGLE;

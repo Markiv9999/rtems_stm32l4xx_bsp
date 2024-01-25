@@ -15,14 +15,14 @@
 #include "ext_error_codes.h"
 #include "ext_typedefs.h"
 
-#define MT29_PAGE_W_SIZE 512
+#define MT29_PAGE_W_SIZE 1024
 #define MT29_PAGE_SIZE (MT29_PAGE_W_SIZE * 4)
-#define MT29_BLOCK_SIZE (MT29_PAGE_B_SIZE * 64)
-#define MT29_IC_SIZE (MT29_BLOCK_B_SIZE * 2048)
 
 #define WEL_MASK 0x03U
 #define WEL_MATCH 0x02U
 
+#define OIP_MASK 0x01UL
+#define OIP_MATCH 0x00UL
 // data
 //
 
@@ -47,8 +47,8 @@ struct mspi_device {
   struct mspi_cmd (*page_program)(void *);
   struct mspi_cmd (*block_erase)(void *);
 
-  struct mspi_cmd (*wait_write_enable)(void *); // TODO implement
-  struct mspi_cmd (*wait_program_complete)(void *);
+  struct mspi_cmd (*wait_write_enable)(void *);
+  struct mspi_cmd (*wait_oip)(void *);
 };
 
 // methods

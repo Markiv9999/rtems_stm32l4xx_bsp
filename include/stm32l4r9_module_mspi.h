@@ -46,6 +46,7 @@ struct mspi_cmd {
 
   u32 addr_size;
   u32 data_size;
+  u32 dummy_size;
 
   unsigned int instr_cmd;
   unsigned int addr_cmd;
@@ -91,4 +92,4 @@ u16 mspi_interface_wait_busy(struct mspi_interface);
 // methods declarations
 u16 mspi_transfer(struct mspi_interface,
                   struct mspi_cmd (*device_fun_handler)(void *), void *);
-void mspi_dma_push_init(u32 *data_prt, u32 size_tr);
+void mspi_dma_push_init(void);
