@@ -20,7 +20,7 @@ void hwlist_require(struct Node *head, u32 (*child_if)(void),
     /* if father is not null, add afer father node */
 
     struct Node *f_node_ptr;
-    f_node_ptr = hwlist_search_node(head, f_data);
+    f_node_ptr = hwlist_search_frm_hwif(head, f_data);
     hwlist_insert_after_node(f_node_ptr, c_data);
   }
 }

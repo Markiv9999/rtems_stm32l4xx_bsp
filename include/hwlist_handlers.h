@@ -30,9 +30,6 @@ struct Node {
   struct Node *next;
 };
 
-/* define the node structure */
-struct Node hwlist_node_pool[HWLST_POOL_SIZE];
-
 void hwlist_init_node_pool(void);
 struct Node *hwlist_get_newnode(struct node_data data);
 void hwlist_insert_beginning(struct Node **head, struct node_data data);

@@ -1,10 +1,11 @@
 #include "ext_error_codes.h"
 #include "ext_typedefs.h"
 
-#include "stm32l4r9xx.h"
+/* hardwarelist requirements */
+#include "hwlist_agent.h"
 
-// #define CLK_MSI_120MHZ
-//  #define CLK_HSE_120MHZ
+extern struct Node *hw_head;
 
-void SystemClock_Config(void);
-void enable_debug_clock(void);
+/* public interfaces */
+u32 system_clock_init(void);
+u32 sensor_clock_init(void);

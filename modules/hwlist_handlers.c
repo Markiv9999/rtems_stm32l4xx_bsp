@@ -1,5 +1,8 @@
 #include "hwlist_handlers.h"
 
+/* define the node structure */
+struct Node hwlist_node_pool[HWLST_POOL_SIZE];
+
 /* initialize all nodes as not in use */
 void hwlist_init_node_pool(void) {
   for (int i = 0; i < HWLST_POOL_SIZE; i++) {
@@ -81,7 +84,7 @@ void hwlist_insert_after_node(struct Node *prevNode,
   prevNode->next = newNode;
 }
 
-void hwlist_delete_node(struct Node **head, struct node_data input_data) {
+void hwlist_delete_frm_hwif(struct Node **head, struct node_data input_data) {
   struct Node *temp = *head, *prev = NULL;
 
   if (temp != NULL && temp->data.node_hw_if == input_data.node_hw_if) {
@@ -102,8 +105,8 @@ void hwlist_delete_node(struct Node **head, struct node_data input_data) {
   temp->in_use = false;
 }
 
-struct Node *hwlist_search_node(struct Node *head,
-                                struct node_data input_data) {
+struct Node *hwlist_search_frm_hwif(struct Node *head,
+                                    struct node_data input_data) {
   struct Node *current = head;
   while (current != NULL) {
     if (current->data.node_hw_if == input_data.node_hw_if)
@@ -113,10 +116,17 @@ struct Node *hwlist_search_node(struct Node *head,
   return NULL;
 }
 
+#include <hal_uart.h>
+#include <string.h>
 void hwlist_print_list(struct Node *node) {
+  int i = 0;
   while (node != NULL) {
-    // printf("%d ", node->data.node_hw_if);
+    char temp_str[50];
+    int n;
+    n = sprintf(temp_str, "node %d = %x \r\n", i, node->data.node_hw_if);
+    uart_write_buf(USART2, temp_str, n);
     node = node->next;
+    i++;
   }
   // printf("\n");
 }
