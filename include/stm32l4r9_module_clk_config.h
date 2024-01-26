@@ -6,5 +6,5 @@
 // #define CLK_MSI_120MHZ
 //  #define CLK_HSE_120MHZ
 
-// void clock_configure(void);
+void SystemClock_Config(void);
 void enable_debug_clock(void);

@@ -11,10 +11,19 @@ struct jpeg_image {
 };
 
 /* External interfaces */
-void ov5640_configure_jpeg_720p(void);    // functional
-void ov5640_configure_jpeg_1080p(void);   // non functional
-void ov5640_configure_color_bar(void);    // functional
-void ov5640_configure_color_square(void); // functional
+void ov5640_configure_jpeg_720p(void);    // NOTE: WORKING
+void ov5640_configure_jpeg_1080p(void);   // FIX: NOT WORKING
+void ov5640_configure_jpeg_QXGA(void);    // FIX: NOT WORKING
+void ov5640_configure_color_bar(void);    // NOTE: WORKING
+void ov5640_configure_color_square(void); // NOTE: WORKING
+void ov5640_c_advanced_awb(void);         // NOTE: WORKING
+void ov5640_c_simple_awb(void);           // XXX: UNTESTED
+void ov5640_c_quality_high(void);         // NOTE: WORKING
+void ov5640_c_quality_high(void);         // XXX: UNTESTED
+void ov5640_c_quality_high(void);         // XXX: UNTESTED
+
+void ov5640_test_fun(void);
+
 u32 *dcmi_cfg_transfer(void);
 void dcmi_cfg_periph(void);
 void dcmi_buffer_analisis(struct jpeg_image *, u32 *);
