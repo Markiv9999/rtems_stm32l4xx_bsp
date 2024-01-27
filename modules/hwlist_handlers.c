@@ -22,6 +22,7 @@ struct Node *hwlist_get_newnode(struct node_data data) {
       hwlist_node_pool[i].data = data;
       hwlist_node_pool[i].in_use = true;
       hwlist_node_pool[i].next = NULL;
+      hwlist_node_pool[i].prev = NULL;
       return &hwlist_node_pool[i];
     }
   }
@@ -40,6 +41,12 @@ void hwlist_insert_beginning(struct Node **head, struct node_data data) {
     return; // No available node
 
   newNode->next = *head;
+  newNode->prev = NULL;
+
+  if (*head != NULL) {
+    (*head)->prev = newNode;
+  }
+
   *head = newNode;
 }
 
@@ -55,7 +62,7 @@ void hwlist_insert_end(struct Node **head, struct node_data data) {
     return; // No available node
 
   if (*head == NULL) {
-
+    newNode->prev = NULL;
     *head = newNode;
     return;
   }
@@ -66,6 +73,7 @@ void hwlist_insert_end(struct Node **head, struct node_data data) {
   }
 
   last->next = newNode;
+  newNode->prev = last;
 }
 
 /*
@@ -81,27 +89,36 @@ void hwlist_insert_after_node(struct Node *prevNode,
     return; // No available node
 
   newNode->next = prevNode->next;
+  newNode->prev = prevNode;
   prevNode->next = newNode;
+
+  if (newNode->next != NULL) {
+
+    newNode->next->prev = newNode;
+  }
 }
 
 void hwlist_delete_frm_hwif(struct Node **head, struct node_data input_data) {
-  struct Node *temp = *head, *prev = NULL;
-
-  if (temp != NULL && temp->data.node_hw_if == input_data.node_hw_if) {
-    *head = temp->next;
-    temp->in_use = false;
-    return;
-  }
+  struct Node *temp = *head;
 
   while (temp != NULL && temp->data.node_hw_if != input_data.node_hw_if) {
-    prev = temp;
     temp = temp->next;
   }
 
   if (temp == NULL)
-    return;
+    return; // Key not found
 
-  prev->next = temp->next;
+  if (temp->prev != NULL) {
+    temp->prev->next = temp->next;
+
+  } else {
+    *head = temp->next;
+  }
+
+  if (temp->next != NULL) {
+    temp->next->prev = temp->prev;
+  }
+
   temp->in_use = false;
 }
 

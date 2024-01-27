@@ -27,6 +27,8 @@ struct node_data {
 struct Node {
   struct node_data data;
   bool in_use;
+  bool initialized;
+  struct Node *prev;
   struct Node *next;
 };
 

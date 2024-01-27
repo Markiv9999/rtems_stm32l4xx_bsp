@@ -7,6 +7,7 @@ void SystemClock_Config(void);
 
 /* public */
 u32 system_clock_init(void) {
+  hwlist_require(&hw_head, &HAL_Init, NULL);
   /* if the PLL clock source is in use skips configuration */
   if ((RCC->CFGR & RCC_CFGR_SWS_Msk) != 0b11 << RCC_CFGR_SWS_Pos) {
     SystemClock_Config();
@@ -57,7 +58,7 @@ void SystemClock_Config(void) {
 }
 
 u32 sensor_clock_init(void) {
-  hwlist_require(&hw_head, &system_clock_init, NULL);
+  hwlist_require(hw_head, &system_clock_init, NULL);
   /* enable debug clock output */
   RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
   // enable AHB2 clock

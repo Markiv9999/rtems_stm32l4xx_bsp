@@ -24,3 +24,18 @@ void hwlist_require(struct Node **head, u32 (*child_if)(void),
     hwlist_insert_after_node(f_node_ptr, c_data);
   }
 }
+
+void hwlist_agent_iterate(struct Node *node) {
+  while (node != NULL) {
+    /* activate this initialization function */
+    node->data.node_hw_if; // this is a function pointer. how can uoi call it?
+    node = node->next;
+    // the issue is that you need to go from the last to the first...
+    // you should need a double linked list in this case..
+    // can you do what you were tying to do if you are just able to go from low
+    // to high?
+
+    /* you can recreate a chain of addresses to have a backwards (execution)
+     * address chain */
+  }
+}
