@@ -12,7 +12,7 @@
 #include <console.h>
 #include <rtems/bspIo.h> //for printk?
 
-#include "hal_uart.h"
+#include "stm32l4r9_module_uart.h"
 
 /* NOTE: it also includes what seems to be a dvice specification header:
  * #include <dev/serial/zynq-uart.h>

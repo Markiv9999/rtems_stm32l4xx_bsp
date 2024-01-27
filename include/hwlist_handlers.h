@@ -14,8 +14,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "ext_typedefs.h"
+#include "stm32l4r9_module_uart.h"
 
 #define HWLST_POOL_SIZE 30
 
@@ -27,7 +29,7 @@ struct node_data {
 struct Node {
   struct node_data data;
   bool in_use;
-  bool initialized;
+  u8 init_status;
   struct Node *prev;
   struct Node *next;
 };

@@ -133,8 +133,6 @@ struct Node *hwlist_search_frm_hwif(struct Node *head,
   return NULL;
 }
 
-#include <hal_uart.h>
-#include <string.h>
 void hwlist_print_list(struct Node *node) {
   int i = 0;
   while (node != NULL) {

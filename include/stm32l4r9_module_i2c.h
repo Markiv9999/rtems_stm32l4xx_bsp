@@ -1,3 +1,4 @@
+#pragma once
 #include "./st_hal/i2c.h"
 #include "ext_typedefs.h"
 

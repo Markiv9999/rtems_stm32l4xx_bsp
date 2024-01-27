@@ -1,5 +1,9 @@
 #pragma once
+
 /* this is an EXTREMELY CRUDE and temporary uart driver
+ * it has been developed in this way to satisfy necessities of early
+ * development.
+ * It feautures a bare metal approach and assumes only clock configuration.
  */
 
 #include <inttypes.h>
@@ -23,7 +27,8 @@ static inline void spin(volatile uint32_t count) {
 }
 
 #define GPIO(bank) ((GPIO_TypeDef *)(GPIOA_BASE + 0x400U * (bank)))
-enum { GPIO_MODE_INPUT, GPIO_MODE_OUTPUT, GPIO_MODE_AF, GPIO_MODE_ANALOG };
+
+#define GPIO_MODE_AF 0b10
 
 static inline void gpio_set_mode(uint16_t pin, uint8_t mode) {
   GPIO_TypeDef *gpio = GPIO(PINBANK(pin)); // GPIO bank
@@ -116,3 +121,12 @@ static inline uint8_t timer_expired(volatile uint32_t *threshold, uint32_t prd,
                    : *threshold + prd; // Next expiration time
   return 1;                            // Expired, return true
 }
+
+/*
+ * external interfaces
+ */
+
+#include "stm32l4r9_module_clk_config.h"
+#include <hwlist_agent.h>
+/* initialization function for the debug interface */
+void debug_uart_init(void);

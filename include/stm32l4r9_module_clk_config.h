@@ -1,3 +1,4 @@
+#pragma once
 #include "ext_error_codes.h"
 #include "ext_typedefs.h"
 
