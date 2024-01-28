@@ -2,8 +2,11 @@
 #include "./st_hal/i2c.h"
 #include "ext_error_codes.h"
 #include "ext_typedefs.h"
+#include "hwlist_agent.h"
 #include "ov5640.h"
 #include "ov5640_reg.h"
+#include "stm32l4r9_module_i2c.h"
+#include "stm32l4r9xx.h"
 
 struct jpeg_image {
   u8 *head_ptr;
@@ -25,6 +28,10 @@ void ov5640_c_quality_high(void);         // XXX: UNTESTED
 
 void ov5640_test_fun(void);
 
-u32 *dcmi_cfg_transfer(void);
-void dcmi_cfg_periph(void);
+u32 dcmi_init(void);
+u32 dcmi_dmachannel_init(void);
+u32 dcmi_dmamux_init(void);
+u32 dcmi_dma_enable(void);
+u32 dcmi_peripheral_init(void);
+
 void dcmi_buffer_analisis(struct jpeg_image *, u32 *);

@@ -30,6 +30,8 @@ struct Node {
   struct node_data data;
   bool in_use;
   u8 init_status;
+  u8 init_order;
+  u8 list_index;
   struct Node *prev;
   struct Node *next;
 };
