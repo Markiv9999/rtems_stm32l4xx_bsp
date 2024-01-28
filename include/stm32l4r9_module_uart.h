@@ -129,4 +129,4 @@ static inline uint8_t timer_expired(volatile uint32_t *threshold, uint32_t prd,
 #include "stm32l4r9_module_clk_config.h"
 #include <hwlist_agent.h>
 /* initialization function for the debug interface */
-void debug_uart_init(void);
+u32 debug_uart_init(void);
