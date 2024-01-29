@@ -1,9 +1,8 @@
 #include "stm32l4r9_module_dcmi.h"
 
 /* static buffers */
-#define MAX_DMA_TRS_SIZE 65535
 // XXX: this works, but it is half of a raw image
-static uint32_t dcmi_dma_buffer[MAX_DMA_TRS_SIZE];
+uint32_t dcmi_dma_buffer[MAX_DMA_TRS_SIZE];
 
 u32 dcmi_init(void) {
   /* PREAMBLE */
@@ -58,7 +57,7 @@ u32 dcmi_dmachannel_init(void) {
       0b11 << DMA_CCR_MSIZE_Pos |
       /* peripheral size (32bit)*/
       0b11 << DMA_CCR_PSIZE_Pos |
-      /* FIX: new addition */
+      /* dma in circular mode */
       DMA_CCR_CIRC |
       /* memory increment mode */
       DMA_CCR_MINC;
@@ -216,34 +215,6 @@ u32 dcmi_peripheral_init(void) {
 
   /* enable interface */
   DCMI->CR |= DCMI_CR_ENABLE;
-}
-
-void dcmi_buffer_analisis(struct jpeg_image *img, u32 *data_ptr) {
-  u8 *check_ptr = (u8 *)data_ptr;
-  u8 *head_ptr;
-  u8 *tail_ptr;
-  // ptr_set: [0]:head, [1]:tail
-  u8 ptr_areset = {0};
-  u32 img_size = {0};
-
-  int i = 0;
-  for (i = 0; i < MAX_DMA_TRS_SIZE * 2; i++) {
-    // get location of the jpeg header (FFD8)
-    if (*(check_ptr + i) == 0xFF && *(check_ptr + i + 1) == 0xD8)
-      head_ptr = check_ptr + i;
-    ptr_areset |= 1 << 0;
-    // get location of the jpeg closer (FFD9)
-    if (*(check_ptr + i) == 0xFF && *(check_ptr + i + 1) == 0xD9)
-      tail_ptr = check_ptr + i;
-    ptr_areset |= 1 << 1;
-  }
-  // get location of the last non dirty memory
-  // (to get size of the jpeg image)
-  if (ptr_areset == 0b11)
-    img_size = tail_ptr - head_ptr;
-  img->head_ptr = head_ptr;
-  img->tail_ptr = tail_ptr;
-  img->img_size = img_size;
 }
 
 u32 *dcmi_get_buffer_ptr(void) { return &dcmi_dma_buffer[0]; }

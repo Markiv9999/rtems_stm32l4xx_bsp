@@ -1,4 +1,5 @@
 #include "stm32l4r9_module_mspi.h"
+#include "stm32l4r9_module_mspi_mt29.h"
 
 static uint32_t dma_push_buffer[MT29_PAGE_W_SIZE];
 static uint32_t dma_test_buffer[MT29_PAGE_W_SIZE] = {0};
