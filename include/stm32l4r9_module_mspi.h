@@ -9,10 +9,15 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "ext_error_codes.h"
 #include "ext_typedefs.h"
+#include "hwlist_agent.h"
 #include "stm32l4r9xx.h"
+
+// memory device include
+#include "stm32l4r9_module_mspi_mt29.h"
 
 /**
  * the module shall not include board/device specific informations,
@@ -82,14 +87,23 @@ struct mspi_interface {
  *       INTERFACE SPECIFIC METHODS
  * --------------------------------------------------------------------------- *
  */
-int mspi_init(struct mspi_interface);
-void mspi_gpio_cfg(struct mspi_interface);
-void mspi_sys_cfg(struct mspi_interface);
-void mspi_dev_cfg(struct mspi_interface);
-void mspi_interface_cleanup(struct mspi_interface);
-u16 mspi_interface_wait_busy(struct mspi_interface);
+u32 mspi_init(void);
+u32 mspi1_gpio_init(void);
+u32 mspi2_gpio_init(void);
+u32 mspi1_peripheral_init(void);
+u32 mspi2_peripheral_init(void);
+u32 mspi_mux_init(void);
+u32 mspi1_dev_cfg(void);
+u32 mspi2_dev_cfg(void);
+u32 mspi1_dmamux_init(void);
+u32 mspi2_dmamux_init(void);
+u32 mspi1_dmachannel_push_init(void);
+void mspi1_dmachannel_pull_init(void);
+void mspi2_dmachannel_push_init(void);
+void mspi2_dmachannel_pull_init(void);
 
 // methods declarations
+void mspi_interface_cleanup(struct mspi_interface);
+u16 mspi_interface_wait_busy(struct mspi_interface);
 u16 mspi_transfer(struct mspi_interface,
                   struct mspi_cmd (*device_fun_handler)(void *), void *);
-void mspi_dma_push_init(void);

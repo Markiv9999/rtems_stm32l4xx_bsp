@@ -246,4 +246,4 @@ void dcmi_buffer_analisis(struct jpeg_image *img, u32 *data_ptr) {
   img->img_size = img_size;
 }
 
-u32 *dcmi_get_buffer(void) { return &dcmi_dma_buffer[0]; }
+u32 *dcmi_get_buffer_ptr(void) { return &dcmi_dma_buffer[0]; }

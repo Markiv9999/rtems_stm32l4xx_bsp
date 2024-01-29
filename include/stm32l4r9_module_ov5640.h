@@ -3,6 +3,7 @@
 #include "ext_error_codes.h"
 #include "ext_typedefs.h"
 #include "hwlist_agent.h"
+#include "stm32l4r9_module_clk_config.h"
 #include "stm32l4r9_module_i2c.h"
 
 u32 ov5640_init(void);

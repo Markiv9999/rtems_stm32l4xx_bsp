@@ -2,6 +2,7 @@
 
 u32 ov5640_init(void) {
 #define CURRENT_IF ov5640_init
+  hwlist_require(&hw_head, &sensor_clock_init, CURRENT_IF);
   hwlist_require(&hw_head, &i2c1_init, CURRENT_IF);
   /* configures the sensor after power cycle */
   ov5640_configure_jpeg_720p();

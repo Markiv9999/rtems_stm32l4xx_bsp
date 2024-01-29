@@ -34,4 +34,4 @@ u32 dcmi_dma_enable(void);
 u32 dcmi_peripheral_init(void);
 
 void dcmi_buffer_analisis(struct jpeg_image *, u32 *);
-u32 *dcmi_get_buffer(void);
+u32 *dcmi_get_buffer_ptr(void);
