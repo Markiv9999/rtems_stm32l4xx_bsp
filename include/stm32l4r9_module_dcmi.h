@@ -8,6 +8,7 @@
 #include "stm32l4r9xx.h"
 
 #define MAX_DMA_TRS_SIZE 65535
+#define IMG_METADATA_MAX_BYTESIZE 100
 
 /* External interfaces */
 void ov5640_configure_jpeg_720p(void);    // NOTE: WORKING

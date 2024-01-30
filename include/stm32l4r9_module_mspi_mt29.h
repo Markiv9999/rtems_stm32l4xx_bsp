@@ -18,6 +18,9 @@
 #define MT29_PAGE_W_SIZE 1024
 #define MT29_PAGE_SIZE (MT29_PAGE_W_SIZE * 4)
 
+#define MT29_MAX_PAGEn 64
+#define MT29_MAX_BLOCKn 2048
+
 #define WEL_MASK 0x03U
 #define WEL_MATCH 0x02U
 

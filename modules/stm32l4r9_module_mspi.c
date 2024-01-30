@@ -499,7 +499,8 @@ u16 mspi_transfer(
 
       if (cmd.fun_mode == 0b01) { // read -- only indirect mode
         for (uint32_t i = 0; i < ((cmd.data_size >> 2) + 1); i++) {
-          *(device_context.data_ptr + i) |= OCTOSPI1->DR;
+          *(device_context.data_ptr + i) =
+              OCTOSPI1->DR; // very imprtant that it clears and copies
           // add fifo check
           if (~(OCTOSPI1->SR) & OCTOSPI_SR_TCF_Msk)
             while (~(OCTOSPI1->SR) & OCTOSPI_SR_FTF_Msk) {

@@ -2,7 +2,7 @@
 
 /* static buffers */
 // XXX: this works, but it is half of a raw image
-uint32_t dcmi_dma_buffer[MAX_DMA_TRS_SIZE];
+uint32_t dcmi_dma_buffer[MAX_DMA_TRS_SIZE + IMG_METADATA_MAX_BYTESIZE];
 
 u32 dcmi_init(void) {
   /* PREAMBLE */
