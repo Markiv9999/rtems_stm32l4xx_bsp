@@ -8,10 +8,14 @@
  * --------------------------------------------------------------------------- *
  */
 
+struct mspi_cmd mspi_device_ecc_disable(void *);
+struct mspi_cmd mspi_device_ecc_enable(void *);
 struct mspi_cmd mspi_device_write_unlock(void *);
 struct mspi_cmd mspi_device_write_lock(void *);
 struct mspi_cmd mspi_device_write_enable(void *);
 struct mspi_cmd mspi_device_get_status(void *);
+struct mspi_cmd mspi_device_get_unlock_status(void *);
+struct mspi_cmd mspi_device_get_config_status(void *);
 struct mspi_cmd mspi_device_page_read_from_nand(void *);
 struct mspi_cmd mspi_device_page_read_from_cache_SINGLE(void *);
 struct mspi_cmd mspi_device_page_read_from_cache_QUAD(void *);
@@ -22,6 +26,10 @@ struct mspi_cmd mspi_device_block_erase(void *);
 
 struct mspi_cmd mspi_device_wait_write_enable(void *);
 struct mspi_cmd mspi_device_wait_oip(void *);
+
+u32 RA_gen(struct nand_addr nand_addr);
+u32 CA_gen(struct nand_addr nand_addr);
+
 /**
  * --------------------------------------------------------------------------- *
  *       ADDRESS MANAGEMENT LOCAL FUNCTIONS
@@ -40,6 +48,8 @@ u32 RA_gen(struct nand_addr nand_addr) {
   RA |= ((nand_addr.block & 0x7FF) << 6);
   RA |= (nand_addr.page & 0x3F);
   return RA;
+
+  // old and new are indifferent
 }
 
 u32 CA_gen(struct nand_addr nand_addr) {
@@ -78,7 +88,7 @@ enum addr_size {
   _32_bit,
 };
 
-struct mspi_cmd mspi_device_write_unlock(void *placeholder) {
+struct mspi_cmd mspi_device_ecc_disable(void *placeholder) {
   struct mspi_cmd cmd = {0};
   cmd.is_double_mem = IS_DUAL_MEM;
   cmd.fun_mode = WRITE;
@@ -88,11 +98,31 @@ struct mspi_cmd mspi_device_write_unlock(void *placeholder) {
 
   cmd.addr_mode = SINGLE;
   cmd.addr_size = _8_bit;
-  cmd.addr_cmd = 0xA0;
+  cmd.addr_cmd = 0xB0;
 
   cmd.data_mode = SINGLE;
   cmd.data_size = _8_bit;
-  cmd.data_cmd = 0x00;
+  cmd.data_cmd = 0b00000000;
+  cmd.data_cmd_embedded = 0x1;
+
+  return cmd;
+}
+
+struct mspi_cmd mspi_device_ecc_enable(void *placeholder) {
+  struct mspi_cmd cmd = {0};
+  cmd.is_double_mem = IS_DUAL_MEM;
+  cmd.fun_mode = WRITE;
+
+  cmd.instr_mode = SINGLE;
+  cmd.instr_cmd = 0x1F;
+
+  cmd.addr_mode = SINGLE;
+  cmd.addr_size = _8_bit;
+  cmd.addr_cmd = 0xB0;
+
+  cmd.data_mode = SINGLE;
+  cmd.data_size = _8_bit;
+  cmd.data_cmd = 0b00010000;
   cmd.data_cmd_embedded = 0x1;
 
   return cmd;
@@ -118,6 +148,26 @@ struct mspi_cmd mspi_device_write_lock(void *placeholder) {
   return cmd;
 }
 
+struct mspi_cmd mspi_device_write_unlock(void *placeholder) {
+  struct mspi_cmd cmd = {0};
+  cmd.is_double_mem = IS_DUAL_MEM;
+  cmd.fun_mode = WRITE;
+
+  cmd.instr_mode = SINGLE;
+  cmd.instr_cmd = 0x1F;
+
+  cmd.addr_mode = SINGLE;
+  cmd.addr_size = _8_bit;
+  cmd.addr_cmd = 0xA0;
+
+  cmd.data_mode = SINGLE;
+  cmd.data_size = _8_bit;
+  cmd.data_cmd = 0b00000010;
+  cmd.data_cmd_embedded = 0x1;
+
+  return cmd;
+}
+
 struct mspi_cmd mspi_device_write_enable(void *placeholder) {
   struct mspi_cmd cmd = {0};
   cmd.is_double_mem = IS_DUAL_MEM;
@@ -125,6 +175,42 @@ struct mspi_cmd mspi_device_write_enable(void *placeholder) {
 
   cmd.instr_mode = SINGLE;
   cmd.instr_cmd = 0x06;
+
+  return cmd;
+}
+
+struct mspi_cmd mspi_device_get_unlock_status(void *placeholder) {
+  struct mspi_cmd cmd = {0};
+  cmd.is_double_mem = IS_DUAL_MEM;
+  cmd.fun_mode = READ;
+
+  cmd.instr_mode = SINGLE;
+  cmd.instr_cmd = 0x0F;
+
+  cmd.addr_mode = SINGLE;
+  cmd.addr_size = _8_bit;
+  cmd.addr_cmd = 0xA0;
+
+  cmd.data_mode = SINGLE;
+  cmd.data_size = _8_bit;
+
+  return cmd;
+}
+
+struct mspi_cmd mspi_device_get_config_status(void *placeholder) {
+  struct mspi_cmd cmd = {0};
+  cmd.is_double_mem = IS_DUAL_MEM;
+  cmd.fun_mode = READ;
+
+  cmd.instr_mode = SINGLE;
+  cmd.instr_cmd = 0x0F;
+
+  cmd.addr_mode = SINGLE;
+  cmd.addr_size = _8_bit;
+  cmd.addr_cmd = 0xB0;
+
+  cmd.data_mode = SINGLE;
+  cmd.data_size = _8_bit;
 
   return cmd;
 }
@@ -147,6 +233,7 @@ struct mspi_cmd mspi_device_get_status(void *placeholder) {
   return cmd;
 }
 
+/*
 struct mspi_cmd mspi_device_get_id(void *placeholder) {
   struct mspi_cmd cmd = {0};
   cmd.is_double_mem = IS_DUAL_MEM;
@@ -164,6 +251,7 @@ struct mspi_cmd mspi_device_get_id(void *placeholder) {
 
   return cmd;
 }
+*/
 
 struct mspi_cmd mspi_device_page_read_from_nand(void *nand_addr) {
   struct mspi_cmd cmd = {0};
@@ -341,12 +429,16 @@ struct mspi_cmd mspi_device_wait_oip(void *nand_addr) {
 
 struct mspi_device mspi_device_constr(void) {
   struct mspi_device dev = {0};
+  dev.ecc_disable = &mspi_device_ecc_disable;
+  dev.ecc_enable = &mspi_device_ecc_enable;
   dev.write_unlock = &mspi_device_write_unlock;
   dev.write_lock = &mspi_device_write_lock;
   dev.write_enable = &mspi_device_write_enable;
   dev.write_enable_polled = &mspi_device_wait_write_enable;
   dev.wait_oip = &mspi_device_wait_oip;
   dev.get_status = &mspi_device_get_status;
+  dev.get_unlock_status = &mspi_device_get_unlock_status;
+  dev.get_config_status = &mspi_device_get_config_status;
   dev.page_read_from_nand = &mspi_device_page_read_from_nand;
   dev.page_read_from_cache_SINGLE = &mspi_device_page_read_from_cache_SINGLE;
   dev.page_read_from_cache_QUAD = &mspi_device_page_read_from_cache_QUAD;

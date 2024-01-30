@@ -65,6 +65,9 @@ struct mspi_cmd {
 struct mspi_interface {
   /* device characteristics */
   u8 interface_select;
+  u8 flash_select;
+  u8 is_double_mem;
+
   u32 speed_hz;
   u32 timeout;
 

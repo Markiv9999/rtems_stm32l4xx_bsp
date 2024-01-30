@@ -377,6 +377,13 @@ void mspi_interface_cleanup(struct mspi_interface device) {
     OCTOSPI1->AR &= ~(OCTOSPI_AR_ADDRESS_Msk);
     OCTOSPI1->DR &= ~(OCTOSPI_DR_DATA_Msk);
 
+    OCTOSPI1->CR &= ~(OCTOSPI_CR_APMS);
+    OCTOSPI1->PSMKR &= ~(0xFFFFFFFF);
+    OCTOSPI1->PSMAR &= ~(0xFFFFFFFF);
+    OCTOSPI1->PIR &= ~(0xFFFF);
+    /*sets automatic polling stop*/
+    OCTOSPI1->CR |= OCTOSPI_CR_APMS;
+
     // disable mspi push pull dma channels
     DMA1_Channel1->CCR &= ~(DMA_CCR_EN);
     DMA1_Channel2->CCR &= ~(DMA_CCR_EN);
@@ -433,101 +440,112 @@ u16 mspi_transfer(
   cmd = device_fun_handler(argument);
   mspi_interface_cleanup(device_context);
 
-  if (device_context.interface_select == 0x01) {
-    /* configure for transfer */
-    OCTOSPI1->CR |= ((cmd.fun_mode << OCTOSPI_CR_FMODE_Pos));
-    OCTOSPI1->CCR |= ((cmd.instr_mode << OCTOSPI_CCR_IMODE_Pos) |
-                      (cmd.addr_mode << OCTOSPI_CCR_ADMODE_Pos) |
-                      (cmd.data_mode << OCTOSPI_CCR_DMODE_Pos));
-    if (cmd.addr_mode > 0) {
-      OCTOSPI1->CCR |= (cmd.addr_size << OCTOSPI_CCR_ADSIZE_Pos);
-    }
-    if (cmd.data_mode > 0) {
-      OCTOSPI1->DLR |= (cmd.data_size << OCTOSPI_DLR_DL_Pos);
-    }
+  /* configure for transfer */
+  OCTOSPI1->CR |= ((cmd.fun_mode << OCTOSPI_CR_FMODE_Pos));
+  OCTOSPI1->CCR |= ((cmd.instr_mode << OCTOSPI_CCR_IMODE_Pos) |
+                    (cmd.addr_mode << OCTOSPI_CCR_ADMODE_Pos) |
+                    (cmd.data_mode << OCTOSPI_CCR_DMODE_Pos));
+  if (cmd.addr_mode > 0) {
+    OCTOSPI1->CCR |= (cmd.addr_size << OCTOSPI_CCR_ADSIZE_Pos);
+  }
+  if (cmd.data_mode > 0) {
+    OCTOSPI1->DLR |= (cmd.data_size << OCTOSPI_DLR_DL_Pos);
+  }
 
-    OCTOSPI1->TCR |= cmd.dummy_size << OCTOSPI_TCR_DCYC_Pos;
+  OCTOSPI1->TCR |= cmd.dummy_size << OCTOSPI_TCR_DCYC_Pos;
 
-    // XXX: REMOVE
-    // memcpy(dma_push_buffer, device_context.data_ptr, cmd.data_size);
+  // OCTOSPI1->CR |= 0x4 << OCTOSPI_CR_FTHRES_Pos;
 
+  /*selects flasha configuration */
+  if (device_context.flash_select == 0x01) {
+    OCTOSPI1->CR |= OCTOSPI_CR_FSEL;
+  } else {
+    OCTOSPI1->CR &= ~(OCTOSPI_CR_FSEL);
+  }
+
+  if (device_context.is_double_mem == 0x01) {
+    OCTOSPI1->CR |= 0x1 << 5;
+  } else {
+    OCTOSPI1->CR &= ~(0x1 << 5);
+  }
+
+  /*sets dma utilization*/
+  if (device_context.use_dma) {
+    OCTOSPI1->CR |= OCTOSPI_CR_DMAEN;
+  }
+  if (cmd.fun_mode == 0x2) {
     /* overrides for auto-polling mode*/
     // Set the 'mask', 'match', and 'polling interval' values.
     OCTOSPI1->PSMKR = cmd.autopoll_mask;
     OCTOSPI1->PSMAR = cmd.autopoll_match;
     OCTOSPI1->PIR = 0x10;
-
-    OCTOSPI1->CR |= 0x4 << OCTOSPI_CR_FTHRES_Pos;
-    /*sets dma utilization*/
-    OCTOSPI1->CR |= OCTOSPI_CR_DMAEN;
     /*sets automatic polling stop*/
     OCTOSPI1->CR |= OCTOSPI_CR_APMS;
-    // Enable the peripheral
-    OCTOSPI1->CR |= (OCTOSPI_CR_EN);
+  }
 
-    // Set intruction
-    OCTOSPI1->IR |= (cmd.instr_cmd << OCTOSPI_IR_INSTRUCTION_Pos);
+  // Enable the peripheral
+  OCTOSPI1->CR |= (OCTOSPI_CR_EN);
 
-    if (cmd.addr_mode > 0) {
-      OCTOSPI1->AR |= (cmd.addr_cmd << OCTOSPI_AR_ADDRESS_Pos);
-    }
+  // Set intruction
+  OCTOSPI1->IR |= (cmd.instr_cmd << OCTOSPI_IR_INSTRUCTION_Pos);
 
-    if (cmd.data_mode) { // write -- dma push / indirect
-      // creates deadbee
-      if (cmd.data_cmd_embedded == 0) {
-        if (cmd.fun_mode == 0b00) {
-          if (device_context.use_dma) {
-            /* enables the dma channel */
-            DMA1_Channel1->CCR |= DMA_CCR_EN;
-          } else {
-            // manually set data register content
-            for (uint32_t i = 0; i < ((cmd.data_size >> 2) + 1); i++) {
-              OCTOSPI1->DR |= (u32) * (device_context.data_ptr + i);
-              while (~(OCTOSPI1->SR) & OCTOSPI_SR_FTF) {
-                /*wait while FTF flag is zero */
-              };
-              // XXX: Could be superfluous? No, otherwhise
-              // octospi interface causes bus error
-            }
+  if (cmd.addr_mode > 0) {
+    OCTOSPI1->AR |= (cmd.addr_cmd << OCTOSPI_AR_ADDRESS_Pos);
+  }
+
+  if (cmd.data_mode) { // write -- dma push / indirect
+    // creates deadbee
+    if (cmd.data_cmd_embedded == 0) {
+      if (cmd.fun_mode == 0b00) {
+        if (device_context.use_dma) {
+          /* enables the dma channel */
+          DMA1_Channel1->CCR |= DMA_CCR_EN;
+        } else {
+          // manually set data register content
+          for (uint32_t i = 0; i < ((cmd.data_size >> 2) + 1); i++) {
+            OCTOSPI1->DR |= (u32) * (device_context.data_ptr + i);
+            while (~(OCTOSPI1->SR) & OCTOSPI_SR_FTF) {
+              /*wait while FTF flag is zero */
+            };
+            // XXX: Could be superfluous? No, otherwhise
+            // octospi interface causes bus error
           }
         }
       }
-      // embedded data
-      if (cmd.data_cmd_embedded == 1) {
-        OCTOSPI1->DR |= cmd.data_cmd;
-      }
-
-      if (cmd.fun_mode == 0b01) { // read -- only indirect mode
-        for (uint32_t i = 0; i < ((cmd.data_size >> 2) + 1); i++) {
-          *(device_context.data_ptr + i) =
-              OCTOSPI1->DR; // very imprtant that it clears and copies
-          // add fifo check
-          if (~(OCTOSPI1->SR) & OCTOSPI_SR_TCF_Msk)
-            while (~(OCTOSPI1->SR) & OCTOSPI_SR_FTF_Msk) {
-              /*wait while FTF flag is zero */
-            };
-        }
-      }
     }
-    // wait for the transaction to complete (+ timeout and abort)
-    if (mspi_interface_wait_busy(device_context)) {
-      OCTOSPI1->CR &= ~(OCTOSPI_CR_EN); // disable the interface in anay case
-      return ERROR_MSPI_INTERFACE_STUCK;
+    // embedded data
+    if (cmd.data_cmd_embedded) {
+      OCTOSPI1->DR |= cmd.data_cmd;
     }
 
-    // Acknowledge the 'status match flag.'
-    OCTOSPI1->FCR |= (OCTOSPI_FCR_CSMF);
-    // Un-set the data mode and disable auto-polling.
-    OCTOSPI1->CCR &= ~(OCTOSPI_CR_FMODE | OCTOSPI_CCR_DMODE);
-
-    // disable dma channel
-    DMA1_Channel1->CCR &= ~(DMA_CCR_EN);
-
-    // disable interface
-    OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
-
-    return EXIT_SUCCESS;
+    if (cmd.fun_mode == 0b01) { // read -- only indirect mode
+      for (uint32_t i = 0; i < ((cmd.data_size >> 2) + 1); i++) {
+        *(device_context.data_ptr + i) =
+            OCTOSPI1->DR; // very imprtant that it clears and copies
+        // add fifo check
+        if (~(OCTOSPI1->SR) & OCTOSPI_SR_TCF_Msk)
+          while (~(OCTOSPI1->SR) & OCTOSPI_SR_FTF_Msk) {
+            /*wait while FTF flag is zero */
+          };
+      }
+    }
   }
-  if (device_context.interface_select == 0x02) {
+  // wait for the transaction to complete (+ timeout and abort)
+  if (mspi_interface_wait_busy(device_context)) {
+    OCTOSPI1->CR &= ~(OCTOSPI_CR_EN); // disable the interface in anay case
+    return ERROR_MSPI_INTERFACE_STUCK;
   }
+
+  // Acknowledge the 'status match flag.'
+  OCTOSPI1->FCR |= (OCTOSPI_FCR_CSMF);
+  // Un-set the data mode and disable auto-polling.
+  OCTOSPI1->CCR &= ~(OCTOSPI_CR_FMODE | OCTOSPI_CCR_DMODE);
+
+  // disable dma channel
+  DMA1_Channel1->CCR &= ~(DMA_CCR_EN);
+
+  // disable interface
+  OCTOSPI1->CR &= ~(OCTOSPI_CR_EN);
+
+  return EXIT_SUCCESS;
 }
