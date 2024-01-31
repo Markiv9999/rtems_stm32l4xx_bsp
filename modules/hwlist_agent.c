@@ -1,5 +1,7 @@
 #include "hwlist_agent.h"
 
+struct Node *hw_head = NULL;
+
 u8 init_index = 0;
 
 void hwlist_init(void) {

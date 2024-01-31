@@ -36,11 +36,36 @@
 #include <console.h> //XXX: custom
 #include <stm32l4/hal.h>
 
-static void stm32h7_output_char(char c) {
-  stm32h7_uart_polled_write(&STM32L4_PRINTK_INSTANCE.device, c);
+const stm32l4_uart_config stm32l4_usart2_config = {
+    .gpio = {.regs = 0,           // XXX: placed null
+             .config = {.Pin = 0, // XXX: placed null
+                        .Mode = GPIO_MODE_AF_PP,
+                        .Pull = GPIO_NOPULL,
+                        .Speed = GPIO_SPEED_FREQ_LOW,
+                        .Alternate = GPIO_AF7_USART2}},
+    .irq = USART2_IRQn,
+    .device_index = 1};
+
+stm32l4_uart_context stm32l4_usart2_instance = {
+    .uart = {.Instance = USART2,
+             .Init.BaudRate = BSP_CONSOLE_BAUD,
+             .Init.WordLength = UART_WORDLENGTH_8B,
+             .Init.StopBits = UART_STOPBITS_1,
+             .Init.Parity = UART_PARITY_NONE,
+             .Init.Mode = UART_MODE_TX_RX,
+             .Init.HwFlowCtl = UART_HWCONTROL_NONE,
+             .Init.OverSampling = UART_OVERSAMPLING_16,
+             .Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE,
+             .Init.ClockPrescaler = UART_PRESCALER_DIV1,
+             .AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT},
+    .config = &stm32l4_usart2_config};
+
+static void stm32l4_output_char(char c) {
+  stm32l4_uart_polled_write(&STM32L4_PRINTK_INSTANCE.device, c);
+  // interface in ./stm32l4/hal
 }
 
-static void stm32h7_output_char_init(void) {
+static void stm32l4_output_char_init(void) {
   UART_HandleTypeDef *uart;
 
   uart = &STM32L4_PRINTK_INSTANCE.uart;
@@ -49,21 +74,21 @@ static void stm32h7_output_char_init(void) {
   (void)HAL_UARTEx_SetRxFifoThreshold(uart, UART_RXFIFO_THRESHOLD_1_8);
   (void)HAL_UARTEx_EnableFifoMode(uart);
 
-  BSP_output_char = stm32h7_output_char;
+  BSP_output_char = stm32l4_output_char;
 }
 
-static void stm32h7_output_char_init_early(char c) {
-  stm32h7_output_char_init();
-  stm32h7_output_char(c);
+static void stm32l4_output_char_init_early(char c) {
+  stm32l4_output_char_init();
+  stm32l4_output_char(c);
 }
 
-static int stm32h7_poll_char(void) {
-  return stm32h7_uart_polled_read(&STM32L4_PRINTK_INSTANCE.device);
+static int stm32l4_poll_char(void) {
+  return stm32l4_uart_polled_read(&STM32L4_PRINTK_INSTANCE.device); // interface
 }
 
-BSP_output_char_function_type BSP_output_char = stm32h7_output_char_init_early;
+BSP_output_char_function_type BSP_output_char = stm32l4_output_char_init_early;
 
-BSP_polling_getchar_function_type BSP_poll_char = stm32h7_poll_char;
+BSP_polling_getchar_function_type BSP_poll_char = stm32l4_poll_char;
 
-RTEMS_SYSINIT_ITEM(stm32h7_output_char_init, RTEMS_SYSINIT_BSP_START,
+RTEMS_SYSINIT_ITEM(stm32l4_output_char_init, RTEMS_SYSINIT_BSP_START,
                    RTEMS_SYSINIT_ORDER_LAST_BUT_5);

@@ -1,5 +1,7 @@
 #include <stm32l4r9_module_clk_config.h>
 
+extern struct Node *hw_head;
+
 /* local */
 void SystemClock_Config(void);
 

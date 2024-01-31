@@ -25,8 +25,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LIBBSP_ARM_STM32H7_STM32H7_HAL_H
-#define LIBBSP_ARM_STM32H7_STM32H7_HAL_H
+#ifndef LIBBSP_ARM_STM32l4_STM32H7_HAL_H
+#define LIBBSP_ARM_STM32l4_STM32H7_HAL_H
 
 #include <stm32l4xx_hal.h>
 
@@ -36,132 +36,35 @@
 extern "C" {
 #endif
 
-typedef enum {
-  STM32H7_MODULE_INVALID,
-  STM32H7_MODULE_GPIOA,
-  STM32H7_MODULE_GPIOB,
-  STM32H7_MODULE_GPIOC,
-  STM32H7_MODULE_GPIOD,
-  STM32H7_MODULE_GPIOE,
-  STM32H7_MODULE_GPIOF,
-  STM32H7_MODULE_GPIOG,
-  STM32H7_MODULE_GPIOH,
-  STM32H7_MODULE_GPIOI,
-  STM32H7_MODULE_GPIOJ,
-  STM32H7_MODULE_GPIOK,
-  STM32H7_MODULE_USART1,
-  STM32H7_MODULE_USART2,
-  STM32H7_MODULE_USART3,
-  STM32H7_MODULE_UART4,
-  STM32H7_MODULE_UART5,
-  STM32H7_MODULE_USART6,
-  STM32H7_MODULE_UART7,
-  STM32H7_MODULE_UART8,
-  STM32H7_MODULE_UART9,
-  STM32H7_MODULE_USART10,
-  STM32H7_MODULE_RNG,
-  STM32H7_MODULE_ETH1MAC,
-  STM32H7_MODULE_ETH1TX,
-  STM32H7_MODULE_ETH1RX,
-  STM32H7_MODULE_USB1_OTG,
-  STM32H7_MODULE_USB1_OTG_ULPI,
-  STM32H7_MODULE_USB2_OTG,
-  STM32H7_MODULE_USB2_OTG_ULPI,
-  STM32H7_MODULE_SDMMC1,
-  STM32H7_MODULE_SDMMC2,
-} stm32h7_module_index;
-
-stm32h7_module_index stm32h7_get_module_index(const void *regs);
-
-void stm32h7_clk_enable(stm32h7_module_index index);
-
-void stm32h7_clk_disable(stm32h7_module_index index);
-
-void stm32h7_clk_low_power_enable(stm32h7_module_index index);
-
-void stm32h7_clk_low_power_disable(stm32h7_module_index index);
-
 typedef struct {
   GPIO_TypeDef *regs;
   GPIO_InitTypeDef config;
-} stm32h7_gpio_config;
-
-void stm32h7_gpio_init(const stm32h7_gpio_config *config);
+} stm32l4_gpio_config;
 
 typedef struct {
-  stm32h7_gpio_config gpio;
+  stm32l4_gpio_config gpio;
   rtems_vector_number irq;
   uint8_t device_index;
-} stm32h7_uart_config;
+} stm32l4_uart_config;
 
 typedef struct {
   UART_HandleTypeDef uart;
   bool transmitting;
   rtems_termios_device_context device;
-  const stm32h7_uart_config *config;
-} stm32h7_uart_context;
+  const stm32l4_uart_config *config;
+} stm32l4_uart_context;
 
-static inline stm32h7_uart_context *
-stm32h7_uart_get_context(rtems_termios_device_context *base) {
-  return RTEMS_CONTAINER_OF(base, stm32h7_uart_context, device);
+static inline stm32l4_uart_context *
+stm32l4_uart_get_context(rtems_termios_device_context *base) {
+  return RTEMS_CONTAINER_OF(base, stm32l4_uart_context, device);
 }
 
-void stm32h7_uart_polled_write(rtems_termios_device_context *base, char c);
+void stm32l4_uart_polled_write(rtems_termios_device_context *base, char c);
 
-int stm32h7_uart_polled_read(rtems_termios_device_context *base);
-
-extern stm32h7_uart_context stm32h7_usart1_instance;
-
-extern const stm32h7_uart_config stm32h7_usart1_config;
-
-extern stm32h7_uart_context stm32h7_usart2_instance;
-
-extern const stm32h7_uart_config stm32h7_usart2_config;
-
-extern stm32h7_uart_context stm32h7_usart3_instance;
-
-extern const stm32h7_uart_config stm32h7_usart3_config;
-
-extern stm32h7_uart_context stm32h7_uart4_instance;
-
-extern const stm32h7_uart_config stm32h7_uart4_config;
-
-extern stm32h7_uart_context stm32h7_uart5_instance;
-
-extern const stm32h7_uart_config stm32h7_uart5_config;
-
-extern stm32h7_uart_context stm32h7_usart6_instance;
-
-extern const stm32h7_uart_config stm32h7_usart6_config;
-
-extern stm32h7_uart_context stm32h7_uart7_instance;
-
-extern const stm32h7_uart_config stm32h7_uart7_config;
-
-extern stm32h7_uart_context stm32h7_uart8_instance;
-
-extern const stm32h7_uart_config stm32h7_uart8_config;
-
-extern stm32h7_uart_context stm32h7_uart9_instance;
-
-extern const stm32h7_uart_config stm32h7_uart9_config;
-
-extern stm32h7_uart_context stm32h7_usart10_instance;
-
-extern const stm32h7_uart_config stm32h7_usart10_config;
-
-extern const uint32_t stm32h7_config_pwr_regulator_voltagescaling;
-
-extern const RCC_OscInitTypeDef stm32h7_config_oscillator;
-
-extern const RCC_ClkInitTypeDef stm32h7_config_clocks;
-
-extern const uint32_t stm32h7_config_flash_latency;
-
-extern const RCC_PeriphCLKInitTypeDef stm32h7_config_peripheral_clocks;
+int stm32l4_uart_polled_read(rtems_termios_device_context *base);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LIBBSP_ARM_STM32H7_STM32H7_HAL_H */
+#endif /* LIBBSP_ARM_STM32l4_STM32H7_HAL_H */
