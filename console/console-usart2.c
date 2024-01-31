@@ -29,41 +29,20 @@
 #include "config.h"
 #endif
 
-#include <bsp.h>
-#include <rtems/bspIo.h>
-#include <rtems/sysinit.h>
-
 #include <console.h> //XXX: custom
 #include <stm32l4/hal.h>
+#include <stm32l4r9_module_uart.h>
 
-static void stm32h7_output_char(char c) {
-  stm32h7_uart_polled_write(&STM32L4_PRINTK_INSTANCE.device, c);
-}
-
-static void stm32h7_output_char_init(void) {
-  UART_HandleTypeDef *uart;
-
-  uart = &STM32L4_PRINTK_INSTANCE.uart;
-  (void)HAL_UART_Init(uart);
-  (void)HAL_UARTEx_SetTxFifoThreshold(uart, UART_TXFIFO_THRESHOLD_1_8);
-  (void)HAL_UARTEx_SetRxFifoThreshold(uart, UART_RXFIFO_THRESHOLD_1_8);
-  (void)HAL_UARTEx_EnableFifoMode(uart);
-
-  BSP_output_char = stm32h7_output_char;
-}
-
-static void stm32h7_output_char_init_early(char c) {
-  stm32h7_output_char_init();
-  stm32h7_output_char(c);
-}
-
-static int stm32h7_poll_char(void) {
-  return stm32h7_uart_polled_read(&STM32L4_PRINTK_INSTANCE.device);
-}
-
-BSP_output_char_function_type BSP_output_char = stm32h7_output_char_init_early;
-
-BSP_polling_getchar_function_type BSP_poll_char = stm32h7_poll_char;
-
-RTEMS_SYSINIT_ITEM(stm32h7_output_char_init, RTEMS_SYSINIT_BSP_START,
-                   RTEMS_SYSINIT_ORDER_LAST_BUT_5);
+stm32h7_uart_context stm32h7_usart2_instance = {
+    .uart = {.Instance = USART2,
+             .Init.BaudRate = BSP_CONSOLE_BAUD,
+             .Init.WordLength = UART_WORDLENGTH_8B,
+             .Init.StopBits = UART_STOPBITS_1,
+             .Init.Parity = UART_PARITY_NONE,
+             .Init.Mode = UART_MODE_TX_RX,
+             .Init.HwFlowCtl = UART_HWCONTROL_NONE,
+             .Init.OverSampling = UART_OVERSAMPLING_16,
+             .Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE,
+             .Init.ClockPrescaler = UART_PRESCALER_DIV1,
+             .AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT},
+    .config = &debug_uart_init}; // XXX: substituted with won function

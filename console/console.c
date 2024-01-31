@@ -1,249 +1,244 @@
-/* TODO: remove comments and move them to docs */
+/* SPDX-License-Identifier: BSD-2-Clause */
 
-#include <rtems/console.h>
-/* NOTE: What does rtems/console.h contain?
- * Contains the generic console drvice driver interface for all boards
- * It is the interface between the boards drivers and the standard C libarary
- * */
+/*
+ * Copyright (C) 2020 embedded brains GmbH & Co. KG
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
-#include <rtems/termiostypes.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <stm32l4/hal.h>
 
 #include <bsp.h>
-#include <console.h>
-#include <rtems/bspIo.h> //for printk?
+#include <bsp/fatal.h>
+#include <bsp/irq.h>
+#include <rtems/console.h>
 
-#include "stm32l4r9_module_uart.h"
+#include <console.h> //XXX: custom
+#include <inttypes.h>
+#include <stdio.h>
+#include <unistd.h>
 
-/* NOTE: it also includes what seems to be a dvice specification header:
- * #include <dev/serial/zynq-uart.h>
- * the file is located in:
- * ./src/rtems/bsps/include/dev/serial/zynq-uart.h
- * it is therefore a generic BSP include (device specifically)
- * it seems that only a couple of bsp have those generic shared headers,
- * and the files semms to be quite old (circa 2014) therefore it seems like a
- * legacy implementation
- *
- * the file inclues the only header:  rtems/termiosdevice.h
- *
- */
+static stm32h7_uart_context *const stm32l4_uart_instances[] = {
+    &stm32h7_usart2_instance};
 
-/* TODO: determine classes for each of the low level consol driver
- * implementation then cosnsider at least 5 drivers developed in the last 5
- * years and schematize the types of implementation. This work is useful for the
- * Thesis
- * (1) ./x86_64/amd64/console/eficonsole.c: * Copyright (C) 2023 Karel Gardas
- * ---
- * (2)./aarch64/xilinx-zynqmp/console/console.c: * Copyright (C) 2022 On-Line
- * Applications Research Corporation (OAR)
- * ---
- * (3)./aarch64/raspberrypi/console/console.c: * Copyright (C) 2022 Mohd Noor
- * Aman
- * ---
- * (4)./aarch64/xilinx-versal/console/console.c: * Copyright (C) 2021
- * Gedare Bloom <gedare@rtems.org>
- * ---
- * (5)./microblaze/microblaze_fpga/console/console-io.c: * Copyright (C) 2021
- * On-Line Applications Research Corporation (OAR)
- *    utilizes dev/serial/uartlite.h
- * ---
- * (6) ./riscv/noel/console/console-config.c: * Copyright (c) 2021 Cobham
- * Gaisler AB.
- *
- */
+static bool stm32h7_uart_set_attributes(rtems_termios_device_context *base,
+                                        const struct termios *term) {
+  stm32h7_uart_context *ctx;
+  uint32_t previous_baud;
+  uint32_t previous_stop_bits;
+  uint32_t previous_parity;
+  uint32_t previous_mode;
+  HAL_StatusTypeDef status;
 
-/* NOTE:it seems that each bsp uses a different structure for the uart instance
- * context. Therefore it is maybe better ot start from the necessary items used
- * for the rtems_device_install method
- * the method needs:
- * - device fie path template
- * - persistent device handler
- *    (how to obtain it?) initialized in ./shared/dev/serial/zynq-uart.c
- *    the directory ./shared/dev/serial contains a lot of implementations that
- * can be potentially re used or used as an example
- *    the structure is declared in ./include/dev/serial/zynq-uart.h as extern
- *    of the type rtems_termios_device_handler
- * - device flow control handler (optional)
- * - device context, obtaied via the macro
- * RTEMS_TERMIOS_DEVICE_CONTEXT_INITIALIZER:
- * defined in: ./cpukit/include/rtems/termiosdevice.h:
- * Macro Body:
- * The body of the macro is enclosed in curly braces { ... }, which means it's
- * designed to initialize a structure or a similar compound data type. Inside
- * the macro body, there are several elements: {
- * RTEMS_INTERRUPT_LOCK_INITIALIZER(name) }: This initializes an interrupt lock
- * structure. The RTEMS_INTERRUPT_LOCK_INITIALIZER is another macro that
- * initializes an interrupt lock. The name passed to the macro is used here,
- * likely as a label or identifier for the lock.
- *    rtems_termios_device_lock_acquire_default:
- *    This is a function pointer, likely pointing to a default lock acquire
- * function. In the context of RTEMS, this function would be used to acquire a
- * lock on the termios device context.
- * rtems_termios_device_lock_release_default: Similar to the previous entry,
- * this is a function pointer, probably pointing to a default lock release
- * function. It would be used to release the lock on the termios device context.
- */
+  if ((term->c_cflag & CSIZE) != CS8) {
+    return false;
+  }
 
-// NOTE: to be honest i feel like since i will use the CMSIS headers i will not
-// need to use a superset of the rtems termios device context. i can try to work
-// with just it and the cmsis headers
+  ctx = stm32h7_uart_get_context(base);
 
-/* It seems that device specific contexes are usally some expansion of the
- * termios device context */
+  previous_baud = ctx->uart.Init.BaudRate;
+  ctx->uart.Init.BaudRate = rtems_termios_baud_to_number(term->c_ospeed);
 
-/* - from include - just as reference
-#define RTEMS_TERMIOS_DEVICE_CONTEXT_INITIALIZER( name ) \
- * { \
- * { RTEMS_INTERRUPT_LOCK_INITIALIZER( name ) }, \
- *   rtems_termios_device_lock_acquire_default, \
- *   rtems_termios_device_lock_release_default \
- * }
- */
+  previous_stop_bits = ctx->uart.Init.StopBits;
+  if ((term->c_cflag & CSTOPB) != 0) {
+    ctx->uart.Init.StopBits = UART_STOPBITS_2;
+  } else {
+    ctx->uart.Init.StopBits = UART_STOPBITS_1;
+  }
 
-#define STM32L4_UART_DEFAULT_BAUD 9600
-/* TODO: move prototypes */
-void stm32l4_uart_initialize(rtems_termios_device_context *base);
+  previous_parity = ctx->uart.Init.Parity;
+  if ((term->c_cflag & PARENB) != 0) {
+    if ((term->c_cflag & PARODD) != 0) {
+      ctx->uart.Init.Parity = UART_PARITY_ODD;
+    } else {
+      ctx->uart.Init.Parity = UART_PARITY_EVEN;
+    }
+  } else {
+    ctx->uart.Init.Parity = UART_PARITY_NONE;
+  }
 
-static bool stm32l4_uart_first_open(rtems_termios_tty *tty,
-                                    rtems_termios_device_context *base,
-                                    struct termios *term,
-                                    rtems_libio_open_close_args_t *args);
+  previous_mode = ctx->uart.Init.Mode;
+  if ((term->c_cflag & CREAD) != 0) {
+    ctx->uart.Init.Mode = UART_MODE_TX_RX;
+  } else {
+    ctx->uart.Init.Mode = UART_MODE_RX;
+  }
 
-static void stm32l4_uart_last_close(rtems_termios_tty *tty,
-                                    rtems_termios_device_context *base,
-                                    rtems_libio_open_close_args_t *args);
-
-int stm32l4_uart_read_polled(rtems_termios_device_context *base);
-
-void stm32l4_uart_write_polled(rtems_termios_device_context *base, char c);
-
-static bool stm32l4_uart_set_attributes(rtems_termios_device_context *context,
-                                        const struct termios *term);
-
-/* ===== IMPLEMENTATION OF METHODS ========================================== */
-/* ----- sub-block I -------------------------------------------------------- */
-void stm32l4_uart_initialize(rtems_termios_device_context *base) {
-  /* TODO: link */
-}
-
-static bool stm32l4_uart_first_open(rtems_termios_tty *tty,
-                                    rtems_termios_device_context *base,
-                                    struct termios *term,
-                                    rtems_libio_open_close_args_t *args) {
-
-  rtems_termios_set_initial_baud(tty, STM32L4_UART_DEFAULT_BAUD);
-  stm32l4_uart_initialize(base);
+  status = UART_SetConfig(&ctx->uart);
+  if (status != HAL_OK) {
+    ctx->uart.Init.BaudRate = previous_baud;
+    ctx->uart.Init.StopBits = previous_stop_bits;
+    ctx->uart.Init.Parity = previous_parity;
+    ctx->uart.Init.Mode = previous_mode;
+    return false;
+  }
 
   return true;
 }
-/* ----- sub-block II ------------------------------------------------------- */
-static void stm32l4_uart_last_close(rtems_termios_tty *tty,
+
+#ifdef BSP_CONSOLE_USE_INTERRUPTS
+static void stm32h7_uart_interrupt(void *arg) {
+  rtems_termios_tty *tty;
+  rtems_termios_device_context *base;
+  stm32h7_uart_context *ctx;
+  USART_TypeDef *regs;
+  uint32_t isr;
+
+  tty = arg;
+  base = rtems_termios_get_device_context(tty);
+  ctx = stm32h7_uart_get_context(base);
+  regs = ctx->uart.Instance;
+  isr = regs->ISR;
+
+  while ((isr & USART_ISR_RXNE_RXFNE) != 0) {
+    char c;
+
+    c = (uint8_t)regs->RDR;
+    rtems_termios_enqueue_raw_characters(tty, &c, 1);
+
+    isr = regs->ISR;
+  }
+
+  if (ctx->transmitting && (isr & USART_ISR_TXE_TXFNF) != 0) {
+    rtems_termios_dequeue_characters(tty, 1);
+  }
+
+  regs->ICR = USART_ICR_ORECF;
+}
+#endif
+
+static bool stm32h7_uart_first_open(rtems_termios_tty *tty,
+                                    rtems_termios_device_context *base,
+                                    struct termios *term,
+                                    rtems_libio_open_close_args_t *args) {
+  stm32h7_uart_context *ctx;
+  UART_HandleTypeDef *uart;
+#ifdef BSP_CONSOLE_USE_INTERRUPTS
+  rtems_status_code sc;
+#endif
+
+  ctx = stm32h7_uart_get_context(base);
+  uart = &ctx->uart;
+
+  rtems_termios_set_initial_baud(tty, BSP_CONSOLE_BAUD);
+
+  (void)HAL_UART_Init(uart);
+  (void)HAL_UARTEx_SetTxFifoThreshold(uart, UART_TXFIFO_THRESHOLD_1_8);
+  (void)HAL_UARTEx_SetRxFifoThreshold(uart, UART_RXFIFO_THRESHOLD_1_8);
+  (void)HAL_UARTEx_EnableFifoMode(uart);
+
+#ifdef BSP_CONSOLE_USE_INTERRUPTS
+  sc = rtems_interrupt_handler_install(ctx->config->irq, "UART",
+                                       RTEMS_INTERRUPT_SHARED,
+                                       stm32h7_uart_interrupt, tty);
+  if (sc != RTEMS_SUCCESSFUL) {
+    return false;
+  }
+
+  ctx->uart.Instance->CR1 |= USART_CR1_RXNEIE_RXFNEIE;
+#endif
+
+  stm32h7_uart_set_attributes(base, term);
+
+  return true;
+}
+
+static void stm32h7_uart_last_close(rtems_termios_tty *tty,
                                     rtems_termios_device_context *base,
                                     rtems_libio_open_close_args_t *args) {
-  /* TODO: link */
-  /* TODO: evaluate if you actually need it - see zynq implementation */
+#ifdef BSP_CONSOLE_USE_INTERRUPTS
+  stm32h7_uart_context *ctx;
+
+  ctx = stm32h7_uart_get_context(base);
+
+  (void)rtems_interrupt_handler_remove(ctx->config->irq, stm32h7_uart_interrupt,
+                                       tty);
+#endif
 }
 
-/* ----- sub-block III ------------------------------------------------------ */
-int stm32l4_uart_read_polled(rtems_termios_device_context *base) {
-  /* TODO: link */
+static void stm32h7_uart_write(rtems_termios_device_context *base,
+                               const char *buf, size_t len) {
+#ifdef BSP_CONSOLE_USE_INTERRUPTS
+  stm32h7_uart_context *ctx;
+  USART_TypeDef *regs;
+
+  ctx = stm32h7_uart_get_context(base);
+  regs = ctx->uart.Instance;
+
+  if (len > 0) {
+    ctx->transmitting = true;
+    regs->TDR = (uint8_t)buf[0];
+    regs->CR1 |= USART_CR1_TXEIE_TXFNFIE;
+  } else {
+    ctx->transmitting = false;
+    regs->CR1 &= ~USART_CR1_TXEIE_TXFNFIE;
+  }
+#else
+  size_t i;
+
+  for (i = 0; i < len; ++i) {
+    stm32h7_uart_polled_write(base, buf[i]);
+  }
+#endif
 }
 
-/* ----- sub-block IV ------------------------------------------------------- */
-void stm32l4_uart_write_polled(rtems_termios_device_context *base, char c) {
-  /* TODO: link */
-}
-
-/* ----- sub-block V -------------------------------------------------------- */
-static bool stm32l4_uart_set_attributes(rtems_termios_device_context *context,
-                                        const struct termios *term) {
-  /* TODO: link */
-}
-
-/* ===== CONFIGURATION ====================================================== */
-/* ----- generate context instances array -----------------------------------
- */
-rtems_termios_device_context stm32l4_uart_instances[3] = {
-    RTEMS_TERMIOS_DEVICE_CONTEXT_INITIALIZER("stm32l4 UART 1"),
-    RTEMS_TERMIOS_DEVICE_CONTEXT_INITIALIZER("stm32l4 UART 2"),
-    RTEMS_TERMIOS_DEVICE_CONTEXT_INITIALIZER("stm32l4 UART 3"),
+static const rtems_termios_device_handler stm32h7_uart_handler = {
+    .first_open = stm32h7_uart_first_open,
+    .last_close = stm32h7_uart_last_close,
+    .write = stm32h7_uart_write,
+    .set_attributes = stm32h7_uart_set_attributes,
+#ifdef BSP_CONSOLE_USE_INTERRUPTS
+    .mode = TERMIOS_IRQ_DRIVEN
+#else
+    .poll_read = stm32h7_uart_polled_read,
+    .mode = TERMIOS_POLLED
+#endif
 };
 
-/* ----- construct the device handler structure ----------------------------- */
-const rtems_termios_device_handler stm32l4_uart_handler_polled = {
-    .first_open = stm32l4_uart_first_open,
-    .last_close = stm32l4_uart_last_close, // maybe can be null?
-    .poll_read = stm32l4_uart_read_polled,
-    .write = stm32l4_uart_write_polled,
-    .set_attributes = stm32l4_uart_set_attributes,
-    .ioctl = NULL,
-    .mode = TERMIOS_POLLED};
-
-/* ===== IMPLEMENTATION ===================================================== */
-/* ----- install the termios devices ---------------------------------------- */
 rtems_status_code console_initialize(rtems_device_major_number major,
                                      rtems_device_minor_number minor,
                                      void *arg) {
+  size_t i;
 
   rtems_termios_initialize();
 
-  size_t i;
   for (i = 0; i < RTEMS_ARRAY_SIZE(stm32l4_uart_instances); ++i) {
-    char uart[] = "/dev/ttySX";
+    stm32h7_uart_context *ctx;
+    char path[sizeof("/dev/ttySXXX")];
 
-    uart[sizeof(uart) - 2] = (char)('0' + i);
-    rtems_termios_device_install(&uart[0], &stm32l4_uart_handler_polled, NULL,
-                                 &stm32l4_uart_instances[i]);
+    ctx = stm32l4_uart_instances[i];
+    snprintf(path, sizeof(path), "/dev/ttyS%" PRIu8, ctx->config->device_index);
 
-    /*
-     * TODO: See if it can be removed, not sure what it does
-    if (i == BSP_CONSOLE_MINOR) {
-      link(&uart[0], CONSOLE_DEVICE_NAME);
+    rtems_termios_device_install(path, &stm32h7_uart_handler, NULL,
+                                 &ctx->device);
+
+    if (ctx == &STM32L4_PRINTK_INSTANCE) {
+      link(path, CONSOLE_DEVICE_NAME);
     }
-    */
   }
 
   return RTEMS_SUCCESSFUL;
 }
-
-/* ----- initialize bsp debug console interface ----------------------------- */
-
-static void stm32l4_debug_console_early_init(char c);
-
-static void stm32l4_debug_console_early_init(char c) {
-  /* TODO: Put back */
-  // uart_write_byte(UART2, c);
-  // uart_init(UART2, STM32L4_UART_DEFAULT_BAUD);
-  /* TEST: just for testing */
-  // uart_write_buf(UART2, "play victory dance\n\r", 20);
-}
-
-/**
- * @ingroup RTEMSAPIKernelCharIO
- *
- * @brief This function pointer references the kernel character output
- *   implementation.
- *
- * This function pointer shall never be NULL.  It shall be provided by the
- * BSP and statically initialized.  The referenced function shall output
- * exactly the character specified by the parameter.  In particular, it
- * shall not perform character translations, for example ``NL`` to ``CR``
- * followed by
- * ``NR``.  The function shall not block.
- */
-BSP_output_char_function_type BSP_output_char =
-    stm32l4_debug_console_early_init;
-
-/**
- * @ingroup RTEMSAPIKernelCharIO
- *
- * @brief This function pointer may reference the kernel character input
- *   implementation.
- *
- * This function pointer may be NULL.  It may reference a function provided by
- * the BSP.  Referenced functions shall dequeue the least recently received
- * character from the device and return it as an unsigned character.  If no
- * character is enqueued on the device, then the function shall immediately
- * return the value minus one.
- */
-BSP_polling_getchar_function_type BSP_poll_char =
-    NULL; // TODO: add proper pointer

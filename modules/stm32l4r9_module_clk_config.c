@@ -1,6 +1,4 @@
-#include "./st_hal/main.h"
 #include <stm32l4r9_module_clk_config.h>
-#include <stm32l4r9xx.h>
 
 /* local */
 void SystemClock_Config(void);

@@ -1,6 +1,8 @@
 #pragma once
 #include "ext_error_codes.h"
 #include "ext_typedefs.h"
+#include "main.h"
+#include <stm32l4r9xx.h>
 
 /* hardwarelist requirements */
 #include "hwlist_agent.h"

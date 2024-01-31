@@ -29,41 +29,17 @@
 #include "config.h"
 #endif
 
-#include <bsp.h>
-#include <rtems/bspIo.h>
-#include <rtems/sysinit.h>
-
 #include <console.h> //XXX: custom
 #include <stm32l4/hal.h>
 
-static void stm32h7_output_char(char c) {
-  stm32h7_uart_polled_write(&STM32L4_PRINTK_INSTANCE.device, c);
-}
-
-static void stm32h7_output_char_init(void) {
-  UART_HandleTypeDef *uart;
-
-  uart = &STM32L4_PRINTK_INSTANCE.uart;
-  (void)HAL_UART_Init(uart);
-  (void)HAL_UARTEx_SetTxFifoThreshold(uart, UART_TXFIFO_THRESHOLD_1_8);
-  (void)HAL_UARTEx_SetRxFifoThreshold(uart, UART_RXFIFO_THRESHOLD_1_8);
-  (void)HAL_UARTEx_EnableFifoMode(uart);
-
-  BSP_output_char = stm32h7_output_char;
-}
-
-static void stm32h7_output_char_init_early(char c) {
-  stm32h7_output_char_init();
-  stm32h7_output_char(c);
-}
-
-static int stm32h7_poll_char(void) {
-  return stm32h7_uart_polled_read(&STM32L4_PRINTK_INSTANCE.device);
-}
-
-BSP_output_char_function_type BSP_output_char = stm32h7_output_char_init_early;
-
-BSP_polling_getchar_function_type BSP_poll_char = stm32h7_poll_char;
-
-RTEMS_SYSINIT_ITEM(stm32h7_output_char_init, RTEMS_SYSINIT_BSP_START,
-                   RTEMS_SYSINIT_ORDER_LAST_BUT_5);
+/* substitute with your own configuration function
+const stm32h7_uart_config stm32h7_usart2_config = {
+    .gpio = {.regs = STM32H7_USART2_GPIO_REGS,
+             .config = {.Pin = STM32H7_USART2_GPIO_PINS,
+                        .Mode = GPIO_MODE_AF_PP,
+                        .Pull = GPIO_NOPULL,
+                        .Speed = GPIO_SPEED_FREQ_LOW,
+                        .Alternate = GPIO_AF7_USART2}},
+    .irq = USART2_IRQn,
+    .device_index = 1};
+*/

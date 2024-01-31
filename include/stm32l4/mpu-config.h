@@ -25,45 +25,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef LIBBSP_ARM_STM32H7_STM32H7_MPU_CONFIG_H
+#define LIBBSP_ARM_STM32H7_STM32H7_MPU_CONFIG_H
 
-#include <bsp.h>
-#include <rtems/bspIo.h>
-#include <rtems/sysinit.h>
+#include <rtems/score/armv7m.h>
 
-#include <console.h> //XXX: custom
-#include <stm32l4/hal.h>
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
-static void stm32h7_output_char(char c) {
-  stm32h7_uart_polled_write(&STM32L4_PRINTK_INSTANCE.device, c);
+extern const ARMV7M_MPU_Region_config stm32h7_config_mpu_region[];
+extern const size_t stm32h7_config_mpu_region_count;
+
+#ifdef __cplusplus
 }
+#endif /* __cplusplus */
 
-static void stm32h7_output_char_init(void) {
-  UART_HandleTypeDef *uart;
-
-  uart = &STM32L4_PRINTK_INSTANCE.uart;
-  (void)HAL_UART_Init(uart);
-  (void)HAL_UARTEx_SetTxFifoThreshold(uart, UART_TXFIFO_THRESHOLD_1_8);
-  (void)HAL_UARTEx_SetRxFifoThreshold(uart, UART_RXFIFO_THRESHOLD_1_8);
-  (void)HAL_UARTEx_EnableFifoMode(uart);
-
-  BSP_output_char = stm32h7_output_char;
-}
-
-static void stm32h7_output_char_init_early(char c) {
-  stm32h7_output_char_init();
-  stm32h7_output_char(c);
-}
-
-static int stm32h7_poll_char(void) {
-  return stm32h7_uart_polled_read(&STM32L4_PRINTK_INSTANCE.device);
-}
-
-BSP_output_char_function_type BSP_output_char = stm32h7_output_char_init_early;
-
-BSP_polling_getchar_function_type BSP_poll_char = stm32h7_poll_char;
-
-RTEMS_SYSINIT_ITEM(stm32h7_output_char_init, RTEMS_SYSINIT_BSP_START,
-                   RTEMS_SYSINIT_ORDER_LAST_BUT_5);
+#endif /* LIBBSP_ARM_STM32H7_STM32H7_MPU_CONFIG_H */

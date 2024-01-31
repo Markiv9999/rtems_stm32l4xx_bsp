@@ -217,4 +217,4 @@ u32 dcmi_peripheral_init(void) {
   DCMI->CR |= DCMI_CR_ENABLE;
 }
 
-u32 *dcmi_get_buffer_ptr(void) { return &dcmi_dma_buffer[0]; }
+// u32 *dcmi_get_buffer_ptr(void) { return &dcmi_dma_buffer[0]; }

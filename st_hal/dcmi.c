@@ -1,33 +1,35 @@
 /* USER CODE BEGIN Header */
 /**
- ******************************************************************************
- * @file    dcmi.c
- * @brief   This file provides code for the configuration
- *          of the DCMI instances.
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2024 STMicroelectronics.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
- ******************************************************************************
- */
+  ******************************************************************************
+  * @file    dcmi.c
+  * @brief   This file provides code for the configuration
+  *          of the DCMI instances.
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2024 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "./st_hal/dcmi.h"
+#include "dcmi.h"
 
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
 
 DCMI_HandleTypeDef hdcmi;
+DMA_HandleTypeDef hdma_dcmi;
 
 /* DCMI init function */
-void MX_DCMI_Init(void) {
+void MX_DCMI_Init(void)
+{
 
   /* USER CODE BEGIN DCMI_Init 0 */
 
@@ -48,21 +50,25 @@ void MX_DCMI_Init(void) {
   hdcmi.Init.ByteSelectStart = DCMI_OEBS_ODD;
   hdcmi.Init.LineSelectMode = DCMI_LSM_ALL;
   hdcmi.Init.LineSelectStart = DCMI_OELS_ODD;
-  if (HAL_DCMI_Init(&hdcmi) != HAL_OK) {
+  if (HAL_DCMI_Init(&hdcmi) != HAL_OK)
+  {
     Error_Handler();
   }
   /* USER CODE BEGIN DCMI_Init 2 */
 
   /* USER CODE END DCMI_Init 2 */
+
 }
 
-void HAL_DCMI_MspInit(DCMI_HandleTypeDef *dcmiHandle) {
+void HAL_DCMI_MspInit(DCMI_HandleTypeDef* dcmiHandle)
+{
 
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if (dcmiHandle->Instance == DCMI) {
-    /* USER CODE BEGIN DCMI_MspInit 0 */
+  if(dcmiHandle->Instance==DCMI)
+  {
+  /* USER CODE BEGIN DCMI_MspInit 0 */
 
-    /* USER CODE END DCMI_MspInit 0 */
+  /* USER CODE END DCMI_MspInit 0 */
     /* DCMI clock enable */
     __HAL_RCC_DCMI_CLK_ENABLE();
 
@@ -86,7 +92,7 @@ void HAL_DCMI_MspInit(DCMI_HandleTypeDef *dcmiHandle) {
     PD3     ------> DCMI_D5
     PB7     ------> DCMI_VSYNC
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6;
+    GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -107,8 +113,8 @@ void HAL_DCMI_MspInit(DCMI_HandleTypeDef *dcmiHandle) {
     GPIO_InitStruct.Alternate = GPIO_AF4_DCMI;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin =
-        GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_10 | GPIO_PIN_12;
+    GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_10
+                          |GPIO_PIN_12;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -136,18 +142,38 @@ void HAL_DCMI_MspInit(DCMI_HandleTypeDef *dcmiHandle) {
     GPIO_InitStruct.Alternate = GPIO_AF10_DCMI;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    /* USER CODE BEGIN DCMI_MspInit 1 */
+    /* DCMI DMA Init */
+    /* DCMI Init */
+    hdma_dcmi.Instance = DMA1_Channel1;
+    hdma_dcmi.Init.Request = DMA_REQUEST_DCMI;
+    hdma_dcmi.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_dcmi.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_dcmi.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_dcmi.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    hdma_dcmi.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    hdma_dcmi.Init.Mode = DMA_NORMAL;
+    hdma_dcmi.Init.Priority = DMA_PRIORITY_LOW;
+    if (HAL_DMA_Init(&hdma_dcmi) != HAL_OK)
+    {
+      Error_Handler();
+    }
 
-    /* USER CODE END DCMI_MspInit 1 */
+    __HAL_LINKDMA(dcmiHandle,DMA_Handle,hdma_dcmi);
+
+  /* USER CODE BEGIN DCMI_MspInit 1 */
+
+  /* USER CODE END DCMI_MspInit 1 */
   }
 }
 
-void HAL_DCMI_MspDeInit(DCMI_HandleTypeDef *dcmiHandle) {
+void HAL_DCMI_MspDeInit(DCMI_HandleTypeDef* dcmiHandle)
+{
 
-  if (dcmiHandle->Instance == DCMI) {
-    /* USER CODE BEGIN DCMI_MspDeInit 0 */
+  if(dcmiHandle->Instance==DCMI)
+  {
+  /* USER CODE BEGIN DCMI_MspDeInit 0 */
 
-    /* USER CODE END DCMI_MspDeInit 0 */
+  /* USER CODE END DCMI_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_DCMI_CLK_DISABLE();
 
@@ -166,20 +192,22 @@ void HAL_DCMI_MspDeInit(DCMI_HandleTypeDef *dcmiHandle) {
     PD3     ------> DCMI_D5
     PB7     ------> DCMI_VSYNC
     */
-    HAL_GPIO_DeInit(GPIOE, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6);
+    HAL_GPIO_DeInit(GPIOE, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6);
 
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_4 | GPIO_PIN_6);
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_4|GPIO_PIN_6);
 
-    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 |
-                               GPIO_PIN_10 | GPIO_PIN_12);
+    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9
+                          |GPIO_PIN_10|GPIO_PIN_12);
 
     HAL_GPIO_DeInit(GPIOD, GPIO_PIN_3);
 
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_7);
 
-    /* USER CODE BEGIN DCMI_MspDeInit 1 */
+    /* DCMI DMA DeInit */
+    HAL_DMA_DeInit(dcmiHandle->DMA_Handle);
+  /* USER CODE BEGIN DCMI_MspDeInit 1 */
 
-    /* USER CODE END DCMI_MspDeInit 1 */
+  /* USER CODE END DCMI_MspDeInit 1 */
   }
 }
 

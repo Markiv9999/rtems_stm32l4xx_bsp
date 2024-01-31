@@ -1,13 +1,13 @@
 #pragma once
-#include "./st_hal/i2c.h"
 #include "ext_error_codes.h"
 #include "ext_typedefs.h"
-#include "hwlist_agent.h"
 #include "stm32l4r9_module_i2c.h"
 #include "stm32l4r9_module_ov5640.h"
 #include "stm32l4r9xx.h"
 
-#define MAX_DMA_TRS_SIZE 65535
+// #define MAX_DMA_TRS_SIZE 65535 //what it should be
+#define MAX_DMA_TRS_SIZE 40000
+
 #define IMG_METADATA_MAX_BYTESIZE 100
 
 /* External interfaces */
