@@ -206,7 +206,7 @@ u32 dcmi_peripheral_init(void) {
   DCMI->CR |= DCMI_CR_JPEG;
 
   /* Capture mode -> snapshot */
-  // DCMI->CR |= DCMI_CR_CM;
+  DCMI->CR |= DCMI_CR_CM;
 
   /* Capture enable */
   // enabled by the application
