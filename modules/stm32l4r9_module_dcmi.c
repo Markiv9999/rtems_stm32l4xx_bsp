@@ -2,7 +2,7 @@
 
 /* static buffers */
 // XXX: this works, but it is half of a raw image
-uint32_t dcmi_dma_buffer[MAX_DMA_TRS_SIZE + IMG_METADATA_MAX_BYTESIZE];
+uint32_t dcmi_dma_buffer[MAX_DMA_TRS_SIZE + IMG_METADATA_MAX_WSIZE];
 
 u32 dcmi_init(void) {
   /* PREAMBLE */
@@ -45,7 +45,8 @@ u32 dcmi_dmachannel_init(void) {
   /* Set the peripheral register address in the DMA_CPARx register */
   DMA1_Channel3->CPAR = DCMI_BASE + 0x28; // dcmi data register
 
-  DMA1_Channel3->CMAR = (uint32_t)&dcmi_dma_buffer[0];
+  DMA1_Channel3->CMAR =
+      (uint32_t)&dcmi_dma_buffer[0] + IMG_METADATA_MAX_WSIZE * 4;
   /* Configure the total number of data transfers in the DMA_CNDTRx register
    */
   DMA1_Channel3->CNDTR = MAX_DMA_TRS_SIZE;
@@ -193,9 +194,7 @@ u32 dcmi_peripheral_init(void) {
    * */
 
   /* Vsync polarity -> active low */
-  // keep reset (0)
   DCMI->CR |= DCMI_CR_VSPOL;
-  // XXX: typically removed
 
   /* Hsync polarity -> active high */
   // DCMI->CR |= DCMI_CR_HSPOL;
@@ -207,14 +206,12 @@ u32 dcmi_peripheral_init(void) {
   DCMI->CR |= DCMI_CR_JPEG;
 
   /* Capture mode -> snapshot */
-  DCMI->CR |= DCMI_CR_CM;
+  // DCMI->CR |= DCMI_CR_CM;
 
   /* Capture enable */
-  // XXX: Check if needs to be enabled before or after peripheral enable
+  // enabled by the application
   // DCMI->CR |= DCMI_CR_CAPTURE;
 
   /* enable interface */
   DCMI->CR |= DCMI_CR_ENABLE;
 }
-
-// u32 *dcmi_get_buffer_ptr(void) { return &dcmi_dma_buffer[0]; }

@@ -1,8 +1,10 @@
 #include "stm32l4r9_module_mspi.h"
 #include "stm32l4r9_module_mspi_mt29.h"
 
+#ifdef MSPI_DMA
 static uint32_t dma_push_buffer[MT29_PAGE_W_SIZE];
 static uint32_t dma_test_buffer[MT29_PAGE_W_SIZE] = {0};
+#endif
 
 void mspi_dmamux_cfg(void);
 /**
@@ -320,6 +322,8 @@ u32 mspi2_dmamux_init(void) {
 
 #define OCTOSPI_DR_OFF 0x050
 u32 mspi1_dmachannel_push_init(void) {
+
+#ifdef MSPI_DMA
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
 
   /* Clear interrupt status flags */
@@ -348,6 +352,7 @@ u32 mspi1_dmachannel_push_init(void) {
       DMA_CCR_MINC |
       /* memory circular mode */
       DMA_CCR_CIRC;
+#endif /*MSPI_DMA*/
 }
 void mspi1_dmachannel_pull_init(void) {}
 void mspi2_dmachannel_push_init(void) {}
@@ -396,25 +401,6 @@ void mspi_interface_cleanup(struct mspi_interface device) {
   }
 
   if (device.interface_select == 0x02) {
-    // cleanup of functional registers
-    OCTOSPI2->CR &= ~(OCTOSPI_CR_EN);
-
-    OCTOSPI2->CCR &= ~(OCTOSPI_CR_FMODE);
-    OCTOSPI2->CCR &= ~(OCTOSPI_CCR_IMODE);
-    OCTOSPI2->CCR &= ~(OCTOSPI_CCR_ADMODE);
-    OCTOSPI2->CCR &= ~(OCTOSPI_CCR_DMODE);
-    OCTOSPI2->CCR &= ~(OCTOSPI_CCR_ADSIZE);
-    OCTOSPI2->IR &= ~(OCTOSPI_IR_INSTRUCTION);
-
-    OCTOSPI2->DLR &= ~(OCTOSPI_DLR_DL);
-    OCTOSPI2->AR &= ~(OCTOSPI_AR_ADDRESS_Msk);
-    OCTOSPI2->DR &= ~(OCTOSPI_DR_DATA_Msk);
-
-    // clear flags
-    // CTOF seems is not defined in the cmsis header
-    OCTOSPI2->FCR |= (OCTOSPI_FCR_CSMF);
-    OCTOSPI2->FCR |= (OCTOSPI_FCR_CTCF);
-    OCTOSPI2->FCR |= (OCTOSPI_FCR_CTEF);
   }
 }
 

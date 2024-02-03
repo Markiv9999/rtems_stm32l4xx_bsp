@@ -5,10 +5,9 @@
 #include "stm32l4r9_module_ov5640.h"
 #include "stm32l4r9xx.h"
 
-// #define MAX_DMA_TRS_SIZE 65535 //what it should be
-#define MAX_DMA_TRS_SIZE 40000
-
-#define IMG_METADATA_MAX_BYTESIZE 100
+#define MAX_DMA_TRS_SIZE 65535 // what it should be
+// #define MAX_DMA_TRS_SIZE 45535
+#define IMG_METADATA_MAX_WSIZE 65 // what is should be
 
 /* External interfaces */
 void ov5640_configure_jpeg_720p(void);    // NOTE: WORKING
