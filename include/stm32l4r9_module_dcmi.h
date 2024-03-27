@@ -6,7 +6,8 @@
 #include "stm32l4r9_module_ov5640.h"
 #include "stm32l4r9xx.h"
 
-#define MAX_DMA_TRS_SIZE 65535                  // what it should be
+// #define MAX_DMA_TRS_SIZE 65535                  // what it should be
+#define MAX_DMA_TRS_SIZE 32500                  // what it should be
 #define IMG_METADATA_MAX_WSIZE MT29_PAGE_W_SIZE // what is should be
 
 /* External interfaces */
