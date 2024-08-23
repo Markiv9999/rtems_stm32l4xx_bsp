@@ -39,4 +39,5 @@ void BSP_START_TEXT_SECTION bsp_start_hook_1(void) {
     memset(addr, 0, sizeof(char));
     //*addr &= 0U;
   }
+
 }
