@@ -7,3 +7,4 @@ TODO:\\
 - check if typedefs in the bsp are already present in the rtems core
 - check if there is some system already set up for error reporting and error codes
 
+// This version has been adapted to work with stm32l476rg family of microcontrollers
